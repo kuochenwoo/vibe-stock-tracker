@@ -3,6 +3,17 @@ from datetime import datetime, timezone
 
 import yfinance as yf
 
+from app.core.constants import (
+    YFINANCE_DAILY_BAR_INTERVAL,
+    YFINANCE_DAILY_HISTORY_INTERVAL,
+    YFINANCE_DAILY_HISTORY_PERIOD,
+    YFINANCE_PREV_5M_INTERVAL,
+    YFINANCE_PREV_5M_PERIOD,
+    YFINANCE_QUOTE_FALLBACK_INTERVAL,
+    YFINANCE_QUOTE_FALLBACK_PERIOD,
+    YFINANCE_QUOTE_PRIMARY_INTERVAL,
+    YFINANCE_QUOTE_PRIMARY_PERIOD,
+)
 from app.core.config import Settings
 from app.models.market import DailyBar, MarketHistoryPoint, MarketQuote, MarketSnapshot, TrackedTicker
 from app.providers.base import MarketDataProvider
@@ -61,15 +72,15 @@ class YFinanceMarketDataProvider(MarketDataProvider):
     def _fetch_quote(self, ticker: TrackedTicker) -> MarketQuote:
         instrument = yf.Ticker(ticker.symbol)
         history = instrument.history(
-            period="2d",
-            interval="1m",
+            period=YFINANCE_QUOTE_PRIMARY_PERIOD,
+            interval=YFINANCE_QUOTE_PRIMARY_INTERVAL,
             auto_adjust=False,
             prepost=True,
         )
         if history.empty:
             history = instrument.history(
-                period="5d",
-                interval="5m",
+                period=YFINANCE_QUOTE_FALLBACK_PERIOD,
+                interval=YFINANCE_QUOTE_FALLBACK_INTERVAL,
                 auto_adjust=False,
                 prepost=True,
             )
@@ -78,14 +89,14 @@ class YFinanceMarketDataProvider(MarketDataProvider):
 
         latest_row = history.dropna(subset=["Close"]).iloc[-1]
         daily_history = instrument.history(
-            period="10d",
-            interval="1d",
+            period=YFINANCE_DAILY_HISTORY_PERIOD,
+            interval=YFINANCE_DAILY_HISTORY_INTERVAL,
             auto_adjust=False,
             prepost=False,
         )
         history_5m = instrument.history(
-            period="5d",
-            interval="5m",
+            period=YFINANCE_PREV_5M_PERIOD,
+            interval=YFINANCE_PREV_5M_INTERVAL,
             auto_adjust=False,
             prepost=True,
         )
@@ -182,7 +193,7 @@ class YFinanceMarketDataProvider(MarketDataProvider):
         instrument = yf.Ticker(ticker.symbol)
         history = instrument.history(
             period=period,
-            interval="1d",
+            interval=YFINANCE_DAILY_BAR_INTERVAL,
             auto_adjust=False,
             prepost=False,
         )

@@ -1,3 +1,10 @@
+from app.core.constants import (
+    ASSET_TYPE_CRYPTO,
+    CRYPTO_SYMBOL_SUFFIXES,
+    DEFAULT_SESSION_START_BY_ASSET,
+    DEFAULT_SESSION_TIMEZONE_BY_ASSET,
+    FUTURES_SYMBOL_SUFFIX,
+)
 from app.models.market import CreateTrackedTickerRequest, TrackedTicker
 from app.repositories.ticker_repository import TickerRepository
 
@@ -31,22 +38,16 @@ class TickerService:
 
 def _infer_asset_type(symbol: str) -> str:
     normalized = symbol.strip().upper()
-    if normalized.endswith("=F"):
+    if normalized.endswith(FUTURES_SYMBOL_SUFFIX):
         return "futures"
-    if normalized.endswith("-USD") or normalized.endswith("-USDT"):
-        return "crypto"
+    if normalized.endswith(CRYPTO_SYMBOL_SUFFIXES):
+        return ASSET_TYPE_CRYPTO
     return "stock"
 
 
 def _default_timezone(asset_type: str) -> str:
-    if asset_type == "crypto":
-        return "UTC"
-    return "America/New_York"
+    return DEFAULT_SESSION_TIMEZONE_BY_ASSET.get(asset_type, "America/New_York")
 
 
 def _default_session_start(asset_type: str) -> str:
-    if asset_type == "futures":
-        return "18:00"
-    if asset_type == "crypto":
-        return "00:00"
-    return "04:00"
+    return DEFAULT_SESSION_START_BY_ASSET.get(asset_type, "04:00")

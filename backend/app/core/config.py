@@ -4,6 +4,8 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.core.constants import DEFAULT_MARKET_POLL_INTERVAL_SECONDS
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -25,7 +27,7 @@ class Settings(BaseSettings):
         r"172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2}"
         r")(?::\d+)?$"
     )
-    market_poll_interval_seconds: int = 5
+    market_poll_interval_seconds: int = DEFAULT_MARKET_POLL_INTERVAL_SECONDS
     market_data_provider: str = "yfinance"
     postgres_dsn: str = "postgresql://market_alerts:market_alerts@localhost:5432/market_alerts"
     postgres_schema_path: Path = Path("../infra/postgres/init/001_market_schema.sql")

@@ -1,5 +1,6 @@
 from app.core.cache import RedisMarketCache
 from app.core.config import get_settings
+from app.core.constants import DEFAULT_SESSION_START_BY_ASSET, DEFAULT_SESSION_TIMEZONE_BY_ASSET
 from app.core.database import PostgresDatabase
 from app.models.market import TrackedTicker
 from app.providers.factory import MarketDataProviderFactory
@@ -89,8 +90,8 @@ market_service = MarketService(
             provider=settings.market_data_provider,
             metadata={
                 "asset_type": "stock" if item["code"] == "VIX" else "futures",
-                "session_timezone": "America/New_York" if item["code"] == "VIX" else "America/New_York",
-                "session_start": "04:00" if item["code"] == "VIX" else "18:00",
+                "session_timezone": DEFAULT_SESSION_TIMEZONE_BY_ASSET["stock" if item["code"] == "VIX" else "futures"],
+                "session_start": DEFAULT_SESSION_START_BY_ASSET["stock" if item["code"] == "VIX" else "futures"],
                 "macro": True,
             },
         )

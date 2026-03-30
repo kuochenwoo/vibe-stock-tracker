@@ -1,6 +1,23 @@
 from datetime import datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+from app.core.constants import (
+    ASSET_TYPE_CRYPTO,
+    CRYPTO_SYMBOL_SUFFIXES,
+    DAILY_BAR_REFRESH_LAG_DAYS,
+    DEFAULT_SESSION_START_BY_ASSET,
+    DEFAULT_SESSION_TIMEZONE_BY_ASSET,
+    FUTURES_SYMBOL_SUFFIX,
+    MARKET_HISTORY_DEFAULT_RANGE,
+    MARKET_HISTORY_INTRADAY_FRESH_MINUTES,
+    MARKET_HISTORY_INTRADAY_INTERVAL,
+    MARKET_HISTORY_INTRADAY_PERIOD,
+    MARKET_HISTORY_YEAR_BAR_LIMIT,
+    MARKET_HISTORY_YEAR_FRESH_DAYS,
+    MARKET_HISTORY_YEAR_RANGE,
+    MARKET_HISTORY_YEAR_REFRESH_PERIOD,
+    MARKET_HISTORY_YEAR_SEED_PERIOD,
+)
 from app.models.market import MarketHistoryPoint, MarketHistoryResponse, MarketSnapshot, TrackedTicker
 from app.providers.base import MarketDataProvider
 from app.core.cache import RedisMarketCache
@@ -97,20 +114,20 @@ class MarketService:
     async def get_snapshot(self) -> MarketSnapshot:
         return await self.state_store.get_snapshot()
 
-    async def get_history(self, code: str, *, range_value: str = "1d") -> MarketHistoryResponse:
+    async def get_history(self, code: str, *, range_value: str = MARKET_HISTORY_DEFAULT_RANGE) -> MarketHistoryResponse:
         ticker = self._get_tracked_ticker(code)
         range_key = range_value.strip().lower()
         cached = await self.cache.get_chart_history(f"{ticker.code}:{range_key}")
         if cached and _history_is_fresh(cached):
             return cached
 
-        if range_key == "1y":
+        if range_key == MARKET_HISTORY_YEAR_RANGE:
             history = await self._build_year_history(ticker)
         else:
             raw_points = await self.provider.fetch_history(
                 ticker,
-                period="5d",
-                interval="5m",
+                period=MARKET_HISTORY_INTRADAY_PERIOD,
+                interval=MARKET_HISTORY_INTRADAY_INTERVAL,
             )
             history = self._normalize_intraday_history(ticker, raw_points)
 
@@ -125,23 +142,27 @@ class MarketService:
         raise ValueError(f"Ticker code '{lookup}' was not found.")
 
     async def _build_year_history(self, ticker: TrackedTicker) -> MarketHistoryResponse:
-        stored_bars = list(reversed(self.daily_bar_repository.list_recent_bars(ticker.code, 252)))
+        stored_bars = list(
+            reversed(self.daily_bar_repository.list_recent_bars(ticker.code, MARKET_HISTORY_YEAR_BAR_LIMIT))
+        )
         latest_trading_date = self.daily_bar_repository.get_latest_trading_date(ticker.code)
 
-        if len(stored_bars) < 252 or latest_trading_date is None:
-            fetched_bars = await self.provider.fetch_daily_bars(ticker, period="2y")
+        if len(stored_bars) < MARKET_HISTORY_YEAR_BAR_LIMIT or latest_trading_date is None:
+            fetched_bars = await self.provider.fetch_daily_bars(ticker, period=MARKET_HISTORY_YEAR_SEED_PERIOD)
             self.daily_bar_repository.upsert_bars(ticker.code, fetched_bars)
         elif _daily_bars_need_refresh(latest_trading_date):
-            recent_bars = await self.provider.fetch_daily_bars(ticker, period="1mo")
+            recent_bars = await self.provider.fetch_daily_bars(ticker, period=MARKET_HISTORY_YEAR_REFRESH_PERIOD)
             self.daily_bar_repository.upsert_bars(ticker.code, recent_bars)
 
-        bars = list(reversed(self.daily_bar_repository.list_recent_bars(ticker.code, 252)))
+        bars = list(
+            reversed(self.daily_bar_repository.list_recent_bars(ticker.code, MARKET_HISTORY_YEAR_BAR_LIMIT))
+        )
         points = [
             MarketHistoryPoint(
                 timestamp=datetime.combine(bar.trading_date, time.min, tzinfo=timezone.utc),
                 price=bar.close,
             )
-            for bar in bars[-252:]
+            for bar in bars[-MARKET_HISTORY_YEAR_BAR_LIMIT :]
         ]
         prices = [point.price for point in points]
         config = _resolve_session_config(ticker)
@@ -149,7 +170,7 @@ class MarketService:
             code=ticker.code,
             symbol=ticker.symbol,
             name=ticker.name,
-            range="1y",
+            range=MARKET_HISTORY_YEAR_RANGE,
             interval="1d",
             asset_type=config["asset_type"],
             session_timezone=config["session_timezone"],
@@ -184,8 +205,8 @@ class MarketService:
             code=ticker.code,
             symbol=ticker.symbol,
             name=ticker.name,
-            range="1d",
-            interval="5m",
+            range=MARKET_HISTORY_DEFAULT_RANGE,
+            interval=MARKET_HISTORY_INTRADAY_INTERVAL,
             asset_type=config["asset_type"],
             session_timezone=timezone_name,
             session_start=config["session_start"],
@@ -213,25 +234,19 @@ def _resolve_session_config(ticker: TrackedTicker) -> dict[str, str]:
 
 def _infer_asset_type(symbol: str) -> str:
     normalized = symbol.upper()
-    if normalized.endswith("=F"):
+    if normalized.endswith(FUTURES_SYMBOL_SUFFIX):
         return "futures"
-    if normalized.endswith("-USD") or normalized.endswith("-USDT"):
-        return "crypto"
+    if normalized.endswith(CRYPTO_SYMBOL_SUFFIXES):
+        return ASSET_TYPE_CRYPTO
     return "stock"
 
 
 def _default_timezone(asset_type: str) -> str:
-    if asset_type == "crypto":
-        return "UTC"
-    return "America/New_York"
+    return DEFAULT_SESSION_TIMEZONE_BY_ASSET.get(asset_type, "America/New_York")
 
 
 def _default_session_start(asset_type: str) -> str:
-    if asset_type == "futures":
-        return "18:00"
-    if asset_type == "crypto":
-        return "00:00"
-    return "04:00"
+    return DEFAULT_SESSION_START_BY_ASSET.get(asset_type, "04:00")
 
 
 def _parse_session_start(value: str) -> time:
@@ -254,13 +269,19 @@ def _latest_session_start(current: datetime, session_start: time) -> datetime:
 def _history_is_fresh(history: MarketHistoryResponse) -> bool:
     if history.ended_at is None:
         return False
-    if history.range == "1y":
-        return history.ended_at.date() >= (datetime.now(timezone.utc).date() - timedelta(days=4))
-    return datetime.now(timezone.utc) - history.ended_at <= timedelta(minutes=5)
+    if history.range == MARKET_HISTORY_YEAR_RANGE:
+        return history.ended_at.date() >= (
+            datetime.now(timezone.utc).date() - timedelta(days=MARKET_HISTORY_YEAR_FRESH_DAYS)
+        )
+    return datetime.now(timezone.utc) - history.ended_at <= timedelta(
+        minutes=MARKET_HISTORY_INTRADAY_FRESH_MINUTES
+    )
 
 
 def _daily_bars_need_refresh(latest_trading_date) -> bool:
-    return latest_trading_date < (datetime.now(timezone.utc).date() - timedelta(days=1))
+    return latest_trading_date < (
+        datetime.now(timezone.utc).date() - timedelta(days=DAILY_BAR_REFRESH_LAG_DAYS)
+    )
 
 
 def _merge_tickers(primary: list[TrackedTicker], secondary: list[TrackedTicker]) -> list[TrackedTicker]:

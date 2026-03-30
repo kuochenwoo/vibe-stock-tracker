@@ -9,6 +9,7 @@ from xml.etree import ElementTree
 
 import httpx
 
+from app.core.constants import WIRE_NEWS_CACHE_TTL_SECONDS
 from app.models.news import NewsFeedResponse, NewsItem
 from app.repositories.wire_news_repository import WireNewsRepository
 
@@ -30,7 +31,7 @@ class WireNewsService:
         fallback_rss_url: str,
         source_name: str,
         repository: WireNewsRepository,
-        cache_ttl_seconds: int = 600,
+        cache_ttl_seconds: int = WIRE_NEWS_CACHE_TTL_SECONDS,
     ) -> None:
         self.feed_url = feed_url
         self.fallback_rss_url = fallback_rss_url

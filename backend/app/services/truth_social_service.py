@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from html import unescape
 import re
@@ -10,6 +10,14 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
+from app.core.constants import (
+    TRUTH_SOCIAL_ACTIVE_END,
+    TRUTH_SOCIAL_ACTIVE_REFRESH_MINUTES,
+    TRUTH_SOCIAL_ACTIVE_START,
+    TRUTH_SOCIAL_FETCH_FLOOR,
+    TRUTH_SOCIAL_IDLE_REFRESH_MINUTES,
+    TRUTH_SOCIAL_SUMMARY_LIMIT,
+)
 from app.models.social import SocialFeedResponse, SocialPost
 from app.repositories.truth_social_repository import TruthSocialRepository
 
@@ -37,7 +45,7 @@ class TruthSocialService:
 
         if self._should_refresh():
             try:
-                posts, raw_payloads = await self._fetch_feed_posts(limit=max(limit, 20))
+                posts, raw_payloads = await self._fetch_feed_posts(limit=max(limit, TRUTH_SOCIAL_FETCH_FLOOR))
                 if posts:
                     self.repository.upsert_posts(self.account_handle, posts, raw_payloads)
                 self._last_refresh_at = datetime.now(timezone.utc)
@@ -159,7 +167,7 @@ def _extract_tags(text: str) -> list[str]:
     return tags[:4]
 
 
-def _summarize_text(text: str, limit: int = 260) -> str:
+def _summarize_text(text: str, limit: int = TRUTH_SOCIAL_SUMMARY_LIMIT) -> str:
     normalized = WHITESPACE_RE.sub(" ", text).strip()
     if len(normalized) <= limit:
         return normalized
@@ -169,6 +177,6 @@ def _summarize_text(text: str, limit: int = 260) -> str:
 def _current_refresh_interval(now_utc: datetime) -> timedelta:
     ny = now_utc.astimezone(ZoneInfo("America/New_York"))
     is_weekday = ny.weekday() < 5
-    if is_weekday and time(4, 0) <= ny.time() <= time(16, 0):
-        return timedelta(minutes=1)
-    return timedelta(minutes=10)
+    if is_weekday and TRUTH_SOCIAL_ACTIVE_START <= ny.time() <= TRUTH_SOCIAL_ACTIVE_END:
+        return timedelta(minutes=TRUTH_SOCIAL_ACTIVE_REFRESH_MINUTES)
+    return timedelta(minutes=TRUTH_SOCIAL_IDLE_REFRESH_MINUTES)
