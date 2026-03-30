@@ -15,6 +15,7 @@ import { useAlerts } from "./composables/useAlerts";
 import { useMarketStream } from "./composables/useMarketStream";
 import { useSentiment } from "./composables/useSentiment";
 import { useTruthSocial } from "./composables/useTruthSocial";
+import { useWireNews } from "./composables/useWireNews";
 
 const {
   cards,
@@ -37,6 +38,11 @@ const {
   popupNotice: truthSocialPopupNotice,
   dismissPopup: dismissTruthSocialPopup,
 } = useTruthSocial();
+const {
+  error: wireNewsError,
+  loading: wireNewsLoading,
+  items: wireNewsItems,
+} = useWireNews();
 const {
   activeAlerts,
   addAlert,
@@ -100,127 +106,13 @@ const macroItems = computed(() =>
     })
     .filter((item) => item.price != null || item.change_percent != null),
 );
-const mockWireNewsItems = [
-  {
-    id: "bloomberg-fed",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T09:18:00+09:00",
-    title: "Treasuries Edge Higher as Traders Reprice Fed Path Into Quarter-End",
-    summary:
-      "Rates desks are leaning defensive into month-end flows, with front-end yields slipping as traders wait for the next inflation impulse.",
-    tags: ["Rates", "Fed", "Macro"],
-  },
-  {
-    id: "bloomberg-tech",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T08:56:00+09:00",
-    title: "Chip Complex Holds Bid With AI Spend Still Driving Index Leadership",
-    summary:
-      "Semiconductor names remain central to index direction, with traders watching whether leadership broadens beyond the largest AI beneficiaries.",
-    tags: ["Semis", "AI", "Equities"],
-  },
-  {
-    id: "bloomberg-oil",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T08:49:00+09:00",
-    title: "Oil Holds Overnight Gains as Supply Risk Premium Rebuilds",
-    summary:
-      "Crude keeps a firmer tone after an overnight bid, with traders watching shipping and refinery headlines for follow-through.",
-    tags: ["Oil", "Energy", "Supply"],
-  },
-  {
-    id: "bloomberg-gold",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T08:37:00+09:00",
-    title: "Gold Traders Watch Dollar Drift and Real Yields for Next Break",
-    summary:
-      "Bullion remains sensitive to the interplay between the dollar, front-end yields, and haven demand into the New York handoff.",
-    tags: ["Gold", "USD", "Rates"],
-  },
-  {
-    id: "bloomberg-nq",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T08:21:00+09:00",
-    title: "Nasdaq Futures Grind Higher as Mega-Caps Continue to Lead",
-    summary:
-      "Index traders are still leaning on the same leadership cluster, though breadth remains narrower than headline futures strength suggests.",
-    tags: ["Nasdaq", "Futures", "Mega-cap"],
-  },
-  {
-    id: "bloomberg-es",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T08:08:00+09:00",
-    title: "S&P Futures Stay Rangebound Ahead of US Data Calendar",
-    summary:
-      "Macro desks are holding a tighter range in index futures while waiting for the next round of scheduled US economic releases.",
-    tags: ["S&P 500", "Macro", "Data"],
-  },
-  {
-    id: "bloomberg-vix",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T07:54:00+09:00",
-    title: "VIX Slips but Dealers Flag Headline Sensitivity Into Open",
-    summary:
-      "Volatility remains contained on the surface, though derivatives desks are still pricing event risk around the edges.",
-    tags: ["VIX", "Volatility", "Derivatives"],
-  },
-  {
-    id: "bloomberg-dollar",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T07:42:00+09:00",
-    title: "Dollar Index Pauses After Three Sessions of Firm Buying",
-    summary:
-      "FX traders are reassessing whether the move was a positioning squeeze or the start of a broader macro repricing.",
-    tags: ["Dollar", "FX", "Macro"],
-  },
-  {
-    id: "bloomberg-bonds",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T07:29:00+09:00",
-    title: "Bond Futures Edge Up as Front-End Traders Price Softer Path",
-    summary:
-      "Treasury futures retain a mild bid with the short end doing most of the work as inflation expectations settle.",
-    tags: ["Bonds", "Treasuries", "Rates"],
-  },
-  {
-    id: "bloomberg-copper",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T07:15:00+09:00",
-    title: "Copper Nears Resistance as China Demand Narrative Firms Again",
-    summary:
-      "Industrial metals are back in focus with cyclical traders watching whether macro optimism can survive into US hours.",
-    tags: ["Copper", "China", "Metals"],
-  },
-  {
-    id: "bloomberg-bitcoin",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T07:03:00+09:00",
-    title: "Bitcoin Range Tightens as ETF Flows Offset Leverage Fatigue",
-    summary:
-      "Crypto desks are balancing resilient spot demand against a cooling leveraged positioning backdrop in derivatives.",
-    tags: ["Bitcoin", "Crypto", "ETF"],
-  },
-  {
-    id: "bloomberg-yen",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T06:52:00+09:00",
-    title: "Yen Traders Stay Alert for Policy Tone as Tokyo Session Ends",
-    summary:
-      "The currency remains highly sensitive to any signal around official discomfort with renewed dollar-yen pressure.",
-    tags: ["JPY", "BoJ", "FX"],
-  },
-  {
-    id: "bloomberg-credit",
-    source: "Bloomberg",
-    publishedAt: "2026-03-30T06:38:00+09:00",
-    title: "Credit Spreads Hold Tight Even as Equity Positioning Looks Crowded",
-    summary:
-      "Cross-asset desks are watching for any sign that calm credit conditions stop validating the equity bid.",
-    tags: ["Credit", "Spreads", "Cross-asset"],
-  },
-];
 const footerHeadlineItems = computed(() =>
-  mockWireNewsItems.map((item) => ({ id: item.id, source: item.source, title: item.title })),
+  wireNewsItems.value.map((item) => ({
+    id: item.id,
+    source: item.source,
+    title: item.title,
+    url: item.url ?? null,
+  })),
 );
 const activePopupNotice = computed(() => truthSocialPopupNotice.value ?? popupNotice.value);
 
@@ -544,7 +436,9 @@ onBeforeUnmount(() => {
               />
 
               <NewsFeedPanel
-                :items="mockWireNewsItems"
+                :items="wireNewsItems"
+                :loading="wireNewsLoading"
+                :error="wireNewsError"
                 eyebrow="Realtime News"
                 title="Wire"
                 :collapsed="wireNewsCollapsed"
@@ -578,14 +472,17 @@ onBeforeUnmount(() => {
 
     <footer class="headline-ribbon" aria-label="News headline ribbon">
       <div class="headline-ribbon-track">
-        <span
+        <a
           v-for="item in [...footerHeadlineItems, ...footerHeadlineItems]"
           :key="`${item.id}-${item.source}-${item.title}`"
           class="headline-ribbon-item"
+          :href="item.url || undefined"
+          target="_blank"
+          rel="noreferrer"
         >
           <span class="headline-ribbon-source">{{ item.source }}</span>
           <span>{{ item.title }}</span>
-        </span>
+        </a>
       </div>
     </footer>
 

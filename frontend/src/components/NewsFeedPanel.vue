@@ -6,6 +6,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  error: {
+    type: String,
+    default: "",
+  },
   eyebrow: {
     type: String,
     default: "Realtime News",
@@ -64,8 +72,18 @@ function toggleCollapsed() {
           <span :class="['news-source', sourceTone(featuredItem.source)]">{{ featuredItem.source }}</span>
           <span class="news-time">{{ formatPublishedAt(featuredItem.publishedAt) }}</span>
         </div>
-        <h3>{{ featuredItem.title }}</h3>
-        <p>{{ featuredItem.summary }}</p>
+        <h3>
+          <a
+            v-if="featuredItem.url"
+            class="news-item-link"
+            :href="featuredItem.url"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {{ featuredItem.title }}
+          </a>
+          <span v-else>{{ featuredItem.title }}</span>
+        </h3>
         <div class="news-tags">
           <span v-for="tag in featuredItem.tags" :key="`${featuredItem.id}-${tag}`">{{ tag }}</span>
         </div>
@@ -81,12 +99,24 @@ function toggleCollapsed() {
             <span :class="['news-source', sourceTone(item.source)]">{{ item.source }}</span>
             <span class="news-time">{{ formatPublishedAt(item.publishedAt) }}</span>
           </div>
-          <h3>{{ item.title }}</h3>
-          <p>{{ item.summary }}</p>
+          <h3>
+            <a
+              v-if="item.url"
+              class="news-item-link"
+              :href="item.url"
+              target="_blank"
+              rel="noreferrer"
+          >
+            {{ item.title }}
+          </a>
+          <span v-else>{{ item.title }}</span>
+        </h3>
         </article>
       </div>
     </div>
 
-    <p v-else-if="!collapsed" class="sparkline-empty">Waiting for mock headlines.</p>
+    <p v-else-if="!collapsed && loading" class="sparkline-empty">Loading latest headlines.</p>
+    <p v-else-if="!collapsed && error" class="sparkline-empty">{{ error }}</p>
+    <p v-else-if="!collapsed" class="sparkline-empty">Waiting for wire headlines.</p>
   </section>
 </template>

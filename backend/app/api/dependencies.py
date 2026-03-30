@@ -8,6 +8,7 @@ from app.repositories.daily_bar_repository import DailyBarRepository
 from app.repositories.preferences_repository import PreferencesRepository
 from app.repositories.ticker_repository import TickerRepository
 from app.repositories.truth_social_repository import TruthSocialRepository
+from app.repositories.wire_news_repository import WireNewsRepository
 from app.services.alert_service import AlertService
 from app.services.fear_greed_service import FearGreedService
 from app.services.market_poller import MarketPoller
@@ -17,6 +18,7 @@ from app.services.moving_average_service import MovingAverageService
 from app.services.preferences_service import PreferencesService
 from app.services.ticker_service import TickerService
 from app.services.truth_social_service import TruthSocialService
+from app.services.wire_news_service import WireNewsService
 
 settings = get_settings()
 state_store = MarketStateStore()
@@ -28,6 +30,7 @@ alert_repository = AlertRepository(database)
 preferences_repository = PreferencesRepository(database)
 daily_bar_repository = DailyBarRepository(database)
 truth_social_repository = TruthSocialRepository(database)
+wire_news_repository = WireNewsRepository(database)
 ticker_service = TickerService(repository=ticker_repository)
 alert_service = AlertService(
     repository=alert_repository,
@@ -48,6 +51,12 @@ truth_social_service = TruthSocialService(
     account_handle=settings.truth_social_account_handle,
     account_url=f"https://truthsocial.com/@{settings.truth_social_account_handle}",
     repository=truth_social_repository,
+)
+wire_news_service = WireNewsService(
+    feed_url=settings.wire_news_feed_url,
+    fallback_rss_url=settings.wire_news_fallback_rss_url,
+    source_name=settings.wire_news_source_name,
+    repository=wire_news_repository,
 )
 macro_tickers = [
     {

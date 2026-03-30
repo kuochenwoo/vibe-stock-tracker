@@ -98,6 +98,22 @@ CREATE TABLE IF NOT EXISTS truth_social_posts (
 CREATE INDEX IF NOT EXISTS idx_truth_social_posts_author_published
     ON truth_social_posts (author_handle, published_at DESC);
 
+CREATE TABLE IF NOT EXISTS wire_news_items (
+    id TEXT PRIMARY KEY,
+    source TEXT NOT NULL,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    source_url TEXT,
+    published_at TIMESTAMPTZ,
+    tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_wire_news_items_source_published
+    ON wire_news_items (source, published_at DESC);
+
 INSERT INTO tracked_tickers (
     code,
     provider,

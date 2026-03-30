@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     postgres_dsn: str = "postgresql://market_alerts:market_alerts@localhost:5432/market_alerts"
     postgres_schema_path: Path = Path("../infra/postgres/init/001_market_schema.sql")
     redis_url: str = "redis://localhost:6379/0"
+    wire_news_feed_url: str = "https://www.bloomberg.com/latest?utm_source=homepage&utm_medium=web&utm_campaign=latest"
+    wire_news_fallback_rss_url: str = (
+        "https://news.google.com/rss/search?q=site:bloomberg.com&hl=en-US&gl=US&ceid=US:en"
+    )
+    wire_news_source_name: str = "Bloomberg"
     truth_social_feed_url: str = "https://www.trumpstruth.org/feed"
     truth_social_account_handle: str = "realDonaldTrump"
 

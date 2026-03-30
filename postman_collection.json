@@ -172,6 +172,30 @@
       "name": "Social",
       "item": [
         {
+          "name": "Get Wire News Feed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/news/wire?limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "news",
+                "wire"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get Truth Social Feed",
           "request": {
             "method": "GET",
