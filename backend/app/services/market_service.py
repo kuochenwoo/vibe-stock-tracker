@@ -15,21 +15,32 @@ class MarketService:
         state_store: MarketStateStore,
         ticker_service: TickerService,
         cache: RedisMarketCache,
+        macro_tickers: list[TrackedTicker] | None = None,
     ) -> None:
         self.provider = provider
         self.state_store = state_store
         self.ticker_service = ticker_service
         self.cache = cache
+        self.macro_tickers = macro_tickers or []
 
     async def refresh_snapshot(self) -> MarketSnapshot:
         tickers = self.ticker_service.list_tickers()
+        requested_tickers = _merge_tickers(tickers, self.macro_tickers)
         try:
-            snapshot = await self.provider.fetch_snapshot(tickers)
+            provider_snapshot = await self.provider.fetch_snapshot(requested_tickers)
+            snapshot = MarketSnapshot(
+                updated_at=provider_snapshot.updated_at,
+                tracked_tickers=tickers,
+                macro_tickers=self.macro_tickers,
+                markets=provider_snapshot.markets,
+                errors=provider_snapshot.errors,
+            )
         except Exception as exc:  # noqa: BLE001
             previous = await self.state_store.get_snapshot()
             snapshot = MarketSnapshot(
                 updated_at=datetime.now(timezone.utc),
                 tracked_tickers=tickers,
+                macro_tickers=self.macro_tickers,
                 markets=previous.markets,
                 errors=[f"{type(exc).__name__}: {exc}"],
             )
@@ -75,8 +86,8 @@ class MarketService:
         timezone_name = config["session_timezone"]
         zone = ZoneInfo(timezone_name)
         start_time = _parse_session_start(config["session_start"])
-        now_in_zone = datetime.now(zone)
-        session_started_at = _latest_session_start(now_in_zone, start_time)
+        anchor_timestamp = points[-1].timestamp.astimezone(zone) if points else datetime.now(zone)
+        session_started_at = _latest_session_start(anchor_timestamp, start_time)
         session_started_utc = session_started_at.astimezone(timezone.utc)
 
         visible_points = [point for point in points if point.timestamp >= session_started_utc]
@@ -157,3 +168,10 @@ def _history_is_fresh(history: MarketHistoryResponse) -> bool:
     if history.ended_at is None:
         return False
     return datetime.now(timezone.utc) - history.ended_at <= timedelta(minutes=5)
+
+
+def _merge_tickers(primary: list[TrackedTicker], secondary: list[TrackedTicker]) -> list[TrackedTicker]:
+    merged: dict[str, TrackedTicker] = {ticker.code: ticker for ticker in primary}
+    for ticker in secondary:
+        merged.setdefault(ticker.code, ticker)
+    return list(merged.values())

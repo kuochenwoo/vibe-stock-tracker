@@ -697,6 +697,43 @@ h2 {
   color: var(--muted);
 }
 
+.macro-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.macro-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(119, 135, 159, 0.12);
+}
+
+.macro-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.macro-name {
+  font-weight: 600;
+}
+
+.macro-symbol {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.macro-values {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
 .fear-greed-readings {
   display: grid;
   gap: 10px;

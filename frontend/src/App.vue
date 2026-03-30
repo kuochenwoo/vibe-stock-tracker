@@ -4,6 +4,7 @@ import draggable from "vuedraggable";
 import AlertsManager from "./components/AlertsManager.vue";
 import ErrorPanel from "./components/ErrorPanel.vue";
 import FearGreedGauge from "./components/FearGreedGauge.vue";
+import MacroPanel from "./components/MacroPanel.vue";
 import MarketCard from "./components/MarketCard.vue";
 import NotificationPopup from "./components/NotificationPopup.vue";
 import TickerAlarmDrawer from "./components/TickerAlarmDrawer.vue";
@@ -63,6 +64,20 @@ const alertSummaryByMarket = computed(() => {
 
   return summary;
 });
+const macroItems = computed(() =>
+  (snapshot.value.macro_tickers ?? [])
+    .map((ticker) => {
+      const quote = snapshot.value.markets?.[ticker.code];
+      return {
+        code: ticker.code,
+        symbol: ticker.symbol,
+        name: ticker.name,
+        price: quote?.price ?? null,
+        change_percent: quote?.change_percent ?? null,
+      };
+    })
+    .filter((item) => item.price != null || item.change_percent != null),
+);
 
 const daypart = computed(() => {
   const hour = localClock.value.getHours();
@@ -175,6 +190,8 @@ onBeforeUnmount(() => {
           </draggable>
 
           <section v-if="!alarmDrawerTicker" class="sidebar">
+            <MacroPanel v-if="macroItems.length" :items="macroItems" />
+
             <FearGreedGauge
               :snapshot="fearGreedSnapshot"
               :loading="fearGreedLoading"

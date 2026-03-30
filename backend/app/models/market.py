@@ -87,5 +87,6 @@ class MarketHistoryResponse(BaseModel):
 class MarketSnapshot(BaseModel):
     updated_at: datetime | None = None
     tracked_tickers: list[TrackedTicker] = Field(default_factory=list)
+    macro_tickers: list[TrackedTicker] = Field(default_factory=list)
     markets: dict[str, MarketQuote] = Field(default_factory=dict)
     errors: list[str] = Field(default_factory=list)

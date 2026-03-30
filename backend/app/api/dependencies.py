@@ -1,6 +1,7 @@
 from app.core.cache import RedisMarketCache
 from app.core.config import get_settings
 from app.core.database import PostgresDatabase
+from app.models.market import TrackedTicker
 from app.providers.factory import MarketDataProviderFactory
 from app.repositories.alert_repository import AlertRepository
 from app.repositories.preferences_repository import PreferencesRepository
@@ -31,11 +32,43 @@ preferences_service = PreferencesService(
     ticker_repository=ticker_repository,
 )
 fear_greed_service = FearGreedService()
+macro_tickers = [
+    {
+        "code": "VIX",
+        "symbol": "^VIX",
+        "name": "VIX Index",
+    },
+    {
+        "code": "ES",
+        "symbol": "ES=F",
+        "name": "S&P 500 Futures",
+    },
+    {
+        "code": "NQ",
+        "symbol": "NQ=F",
+        "name": "Nasdaq-100 Futures",
+    },
+]
 market_service = MarketService(
     provider=provider,
     state_store=state_store,
     ticker_service=ticker_service,
     cache=market_cache,
+    macro_tickers=[
+        TrackedTicker(
+            code=item["code"],
+            symbol=item["symbol"],
+            name=item["name"],
+            provider=settings.market_data_provider,
+            metadata={
+                "asset_type": "stock" if item["code"] == "VIX" else "futures",
+                "session_timezone": "America/New_York" if item["code"] == "VIX" else "America/New_York",
+                "session_start": "04:00" if item["code"] == "VIX" else "18:00",
+                "macro": True,
+            },
+        )
+        for item in macro_tickers
+    ],
 )
 market_poller = MarketPoller(
     service=market_service,

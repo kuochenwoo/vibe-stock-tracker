@@ -55,9 +55,22 @@ class YFinanceMarketDataProvider(MarketDataProvider):
             prepost=True,
         )
         if history.empty:
+            history = instrument.history(
+                period="5d",
+                interval="5m",
+                auto_adjust=False,
+                prepost=True,
+            )
+        if history.empty:
             raise ValueError(f"No market data returned for {ticker.symbol}")
 
         latest_row = history.dropna(subset=["Close"]).iloc[-1]
+        daily_history = instrument.history(
+            period="10d",
+            interval="1d",
+            auto_adjust=False,
+            prepost=False,
+        )
         history_5m = instrument.history(
             period="5d",
             interval="5m",
@@ -65,7 +78,7 @@ class YFinanceMarketDataProvider(MarketDataProvider):
             prepost=True,
         )
         prev_5m_close, prev_5m_closed_at = self._resolve_previous_5m_close(history_5m)
-        previous_close = self._resolve_previous_close(history)
+        previous_close = self._resolve_previous_close(daily_history, latest_row)
         price = float(latest_row["Close"])
         change = price - previous_close if previous_close is not None else None
         change_percent = (
@@ -124,13 +137,20 @@ class YFinanceMarketDataProvider(MarketDataProvider):
         return points
 
     @staticmethod
-    def _resolve_previous_close(history) -> float | None:
+    def _resolve_previous_close(history, latest_row) -> float | None:
         closes = history["Close"].dropna()
         if closes.empty:
             return None
         if len(closes) == 1:
             return float(closes.iloc[0])
-        return float(closes.iloc[-2])
+
+        latest_date = latest_row.name.date()
+        most_recent_daily_date = closes.index[-1].date()
+
+        if latest_date == most_recent_daily_date:
+            return float(closes.iloc[-2])
+
+        return float(closes.iloc[-1])
 
     @staticmethod
     def _resolve_previous_5m_close(history) -> tuple[float | None, str | None]:
