@@ -1,4 +1,4 @@
 interface:
   display_name: "Change Delivery Workflow"
-  short_description: "Update changelog, Postman, and git delivery."
-  default_prompt: "Use this skill when finishing repository changes that also require changelog updates, Postman collection maintenance, and git add/commit/push."
+  short_description: "Update changelog and Postman artifacts."
+  default_prompt: "Use this skill when finishing repository changes that require changelog updates and Postman collection maintenance, while leaving final verification and git operations to the user."

@@ -156,3 +156,50 @@ The repository now includes a reusable skill that captures the expected delivery
 
 ### Reason
 These changes were made to turn the repeated end-of-change process into a durable project skill that can be reused consistently.
+
+## 2026-03-30 09:18:37
+
+### Change
+Updated the change delivery skill to remove git execution and leave final verification to the user.
+
+### STAR
+
+#### Situation
+The first version of the delivery workflow skill still included automatic git operations, but the preferred workflow changed so final verification and git handling should stay manual.
+
+#### Task
+Adjust the skill so it still enforces changelog and Postman maintenance, while no longer instructing Codex to perform git delivery by default.
+
+#### Action
+- Removed the git delivery section from [SKILL.md](/Users/guozhen_wu/Documents/vibe-code-test/skills/change-delivery-workflow/SKILL.md).
+- Updated the skill description and workflow steps to end with a user handoff.
+- Added explicit instructions that final verification and git operations remain with the user unless explicitly requested.
+
+#### Result
+The project skill now matches the desired workflow: Codex updates required project artifacts, then hands off for manual verification and git operations.
+
+### Reason
+These changes were made to align the skill with the updated collaboration preference for manual final verification and git handling.
+
+## 2026-03-30 09:19:12
+
+### Change
+Aligned the change delivery skill metadata with the new manual-verification workflow.
+
+### STAR
+
+#### Situation
+After removing git execution from the skill body, the skill metadata still referenced git delivery and the skill frontmatter contained a duplicate description line.
+
+#### Task
+Clean up the skill metadata so the skill instructions and discovery metadata consistently reflect the new workflow.
+
+#### Action
+- Removed the duplicate `description` line from [SKILL.md](/Users/guozhen_wu/Documents/vibe-code-test/skills/change-delivery-workflow/SKILL.md).
+- Regenerated [openai.yaml](/Users/guozhen_wu/Documents/vibe-code-test/skills/change-delivery-workflow/agents/openai.yaml) so its prompt and short description no longer mention git delivery.
+
+#### Result
+The change delivery skill now presents a consistent workflow across both its instruction file and UI metadata: update changelog and Postman artifacts, then hand off verification and git operations to the user.
+
+### Reason
+These changes were made to keep the skill definition internally consistent after removing automatic git operations from the workflow.

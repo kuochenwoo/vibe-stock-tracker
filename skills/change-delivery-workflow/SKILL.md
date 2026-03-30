@@ -1,6 +1,6 @@
 ---
 name: change-delivery-workflow
-description: Handle post-change delivery hygiene for this project. Use when code, APIs, docs, or project files were modified and Codex must also update the root CHANGELOG.md in STAR format with system datetime, update postman_collection.json when endpoints are created or changed, and finish with git add, git commit, and git push.
+description: Handle post-change delivery hygiene for this project. Use when code, APIs, docs, or project files were modified and Codex must update the root CHANGELOG.md in STAR format with system datetime and update postman_collection.json when endpoints are created or changed, while leaving final verification and git operations to the user.
 ---
 
 # Change Delivery Workflow
@@ -11,7 +11,7 @@ Apply this workflow after substantive changes in this repository. Treat it as th
 
 1. Review what changed.
 2. Update project artifacts that must stay in sync.
-3. Commit and push the change set.
+3. Hand off for final verification and git operations.
 
 ## Required Artifacts
 
@@ -34,14 +34,12 @@ Apply this workflow after substantive changes in this repository. Treat it as th
 - Add or update request bodies, path params, and request names so the collection matches the backend routes.
 - If no endpoint changed, leave the collection untouched.
 
-## Git Delivery
+## Handoff
 
-- Run `git status --short` before committing if you need to confirm the staged scope.
-- Use `git add` for the intended files.
-- Create a normal non-interactive commit with a concise message that matches the change set.
-- Run `git push` after the commit.
-- If push fails because of auth, remote, or network issues, report the exact blocker.
-- Never use destructive git commands unless the user explicitly requests them.
+- Stop after code and project artifacts are updated.
+- Leave final verification to the user unless they explicitly ask for it.
+- Leave `git add`, `git commit`, and `git push` to the user unless they explicitly ask for git operations.
+- If relevant, briefly note whether `CHANGELOG.md` or `postman_collection.json` was updated as part of the change.
 
 ## Repo-Specific Notes
 
