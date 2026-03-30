@@ -7,6 +7,7 @@ from app.repositories.alert_repository import AlertRepository
 from app.repositories.daily_bar_repository import DailyBarRepository
 from app.repositories.preferences_repository import PreferencesRepository
 from app.repositories.ticker_repository import TickerRepository
+from app.repositories.truth_social_repository import TruthSocialRepository
 from app.services.alert_service import AlertService
 from app.services.fear_greed_service import FearGreedService
 from app.services.market_poller import MarketPoller
@@ -15,6 +16,7 @@ from app.services.market_state import MarketStateStore
 from app.services.moving_average_service import MovingAverageService
 from app.services.preferences_service import PreferencesService
 from app.services.ticker_service import TickerService
+from app.services.truth_social_service import TruthSocialService
 
 settings = get_settings()
 state_store = MarketStateStore()
@@ -25,6 +27,7 @@ ticker_repository = TickerRepository(database)
 alert_repository = AlertRepository(database)
 preferences_repository = PreferencesRepository(database)
 daily_bar_repository = DailyBarRepository(database)
+truth_social_repository = TruthSocialRepository(database)
 ticker_service = TickerService(repository=ticker_repository)
 alert_service = AlertService(
     repository=alert_repository,
@@ -39,6 +42,12 @@ moving_average_service = MovingAverageService(
     provider=provider,
     ticker_repository=ticker_repository,
     daily_bar_repository=daily_bar_repository,
+)
+truth_social_service = TruthSocialService(
+    feed_url=settings.truth_social_feed_url,
+    account_handle=settings.truth_social_account_handle,
+    account_url=f"https://truthsocial.com/@{settings.truth_social_account_handle}",
+    repository=truth_social_repository,
 )
 macro_tickers = [
     {

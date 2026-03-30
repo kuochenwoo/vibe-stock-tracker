@@ -169,6 +169,35 @@
       ]
     },
     {
+      "name": "Social",
+      "item": [
+        {
+          "name": "Get Truth Social Feed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/social/truth?limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "social",
+                "truth"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Tickers",
       "item": [
         {

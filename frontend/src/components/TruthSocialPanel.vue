@@ -6,6 +6,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  error: {
+    type: String,
+    default: "",
+  },
   collapsed: {
     type: Boolean,
     default: false,
@@ -51,7 +59,18 @@ function toggleCollapsed() {
           <span class="news-source news-source-truth">{{ item.source }}</span>
           <span class="news-time">{{ formatPublishedAt(item.publishedAt) }}</span>
         </div>
-        <h3>{{ item.title }}</h3>
+        <h3>
+          <a
+            v-if="item.url"
+            class="social-post-link"
+            :href="item.url"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {{ item.title }}
+          </a>
+          <span v-else>{{ item.title }}</span>
+        </h3>
         <p>{{ item.summary }}</p>
         <div v-if="item.tags?.length" class="news-tags">
           <span v-for="tag in item.tags" :key="`${item.id}-${tag}`">{{ tag }}</span>
@@ -59,6 +78,8 @@ function toggleCollapsed() {
       </article>
     </div>
 
+    <p v-else-if="!collapsed && loading" class="sparkline-empty">Loading Truth Social posts.</p>
+    <p v-else-if="!collapsed && error" class="sparkline-empty">{{ error }}</p>
     <p v-else-if="!collapsed" class="sparkline-empty">Waiting for Truth Social items.</p>
   </section>
 </template>

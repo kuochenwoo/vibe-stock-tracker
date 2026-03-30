@@ -14,6 +14,7 @@ import TruthSocialPanel from "./components/TruthSocialPanel.vue";
 import { useAlerts } from "./composables/useAlerts";
 import { useMarketStream } from "./composables/useMarketStream";
 import { useSentiment } from "./composables/useSentiment";
+import { useTruthSocial } from "./composables/useTruthSocial";
 
 const {
   cards,
@@ -29,6 +30,13 @@ const {
   loading: fearGreedLoading,
   snapshot: fearGreedSnapshot,
 } = useSentiment();
+const {
+  error: truthSocialError,
+  loading: truthSocialLoading,
+  items: truthSocialItems,
+  popupNotice: truthSocialPopupNotice,
+  dismissPopup: dismissTruthSocialPopup,
+} = useTruthSocial();
 const {
   activeAlerts,
   addAlert,
@@ -211,29 +219,18 @@ const mockWireNewsItems = [
     tags: ["Credit", "Spreads", "Cross-asset"],
   },
 ];
-const mockTruthSocialItems = [
-  {
-    id: "truth-energy",
-    source: "Truth Social",
-    publishedAt: "2026-03-30T09:11:00+09:00",
-    title: "Energy and dollar chatter picks up ahead of the US handoff",
-    summary:
-      "A fast social pulse update on crude, the dollar, and risk appetite as Asia closes and Europe settles in.",
-    tags: ["Energy", "USD", "Flow"],
-  },
-  {
-    id: "truth-vol",
-    source: "Truth Social",
-    publishedAt: "2026-03-30T08:42:00+09:00",
-    title: "Volatility posts turn defensive as futures flatten before New York",
-    summary:
-      "Social commentary is leaning toward hedging and headline sensitivity rather than trend continuation into the next session.",
-    tags: ["Vol", "Futures", "Sentiment"],
-  },
-];
 const footerHeadlineItems = computed(() =>
   mockWireNewsItems.map((item) => ({ id: item.id, source: item.source, title: item.title })),
 );
+const activePopupNotice = computed(() => truthSocialPopupNotice.value ?? popupNotice.value);
+
+function dismissActivePopup() {
+  if (truthSocialPopupNotice.value) {
+    dismissTruthSocialPopup();
+    return;
+  }
+  dismissPopup();
+}
 
 const daypart = computed(() => {
   const hour = localClock.value.getHours();
@@ -539,7 +536,9 @@ onBeforeUnmount(() => {
               />
 
               <TruthSocialPanel
-                :items="mockTruthSocialItems"
+                :items="truthSocialItems"
+                :loading="truthSocialLoading"
+                :error="truthSocialError"
                 :collapsed="truthSocialCollapsed"
                 @update:collapsed="truthSocialCollapsed = $event"
               />
@@ -555,7 +554,9 @@ onBeforeUnmount(() => {
 
             <TruthSocialPanel
               v-else
-              :items="mockTruthSocialItems"
+              :items="truthSocialItems"
+              :loading="truthSocialLoading"
+              :error="truthSocialError"
               :collapsed="truthSocialCollapsed"
               @update:collapsed="truthSocialCollapsed = $event"
             />
@@ -588,7 +589,10 @@ onBeforeUnmount(() => {
       </div>
     </footer>
 
-    <NotificationPopup :notice="popupNotice" @dismiss="dismissPopup" />
+    <NotificationPopup
+      :notice="activePopupNotice"
+      @dismiss="dismissActivePopup"
+    />
 
     <Teleport to="body">
       <div

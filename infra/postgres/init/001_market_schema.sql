@@ -81,6 +81,23 @@ CREATE TABLE IF NOT EXISTS ticker_daily_bars (
 CREATE INDEX IF NOT EXISTS idx_ticker_daily_bars_ticker_code_date
     ON ticker_daily_bars (ticker_code, trading_date DESC);
 
+CREATE TABLE IF NOT EXISTS truth_social_posts (
+    id TEXT PRIMARY KEY,
+    author_handle TEXT NOT NULL,
+    author_display_name TEXT,
+    source_url TEXT,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    published_at TIMESTAMPTZ,
+    tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_truth_social_posts_author_published
+    ON truth_social_posts (author_handle, published_at DESC);
+
 INSERT INTO tracked_tickers (
     code,
     provider,

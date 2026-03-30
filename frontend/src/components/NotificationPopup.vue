@@ -16,12 +16,12 @@ const emit = defineEmits(["dismiss"]);
         <article class="notice-card">
           <div class="notice-accent"></div>
           <div class="notice-body">
-            <p class="notice-label">Price Alert</p>
+            <p class="notice-label">{{ notice.label ?? "Price Alert" }}</p>
             <h2 class="notice-title">{{ notice.title }}</h2>
             <p class="notice-copy">{{ notice.body }}</p>
             <div class="notice-meta">
-              <span>{{ notice.price }}</span>
-              <span>{{ notice.time }}</span>
+              <span>{{ notice.metaPrimary ?? notice.price }}</span>
+              <span>{{ notice.metaSecondary ?? notice.time }}</span>
             </div>
           </div>
           <button class="notice-dismiss" type="button" @click="emit('dismiss')" aria-label="Dismiss notification">
