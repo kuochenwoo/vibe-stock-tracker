@@ -40,6 +40,9 @@ select {
   width: min(1180px, calc(100vw - 32px));
   margin: 0 auto;
   padding: 24px 0 40px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .settings-nav {
@@ -310,6 +313,7 @@ h2 {
 
 .layout {
   display: block;
+  flex: 1 0 auto;
 }
 
 .workspace {
@@ -332,6 +336,12 @@ h2 {
 
 .workspace-drawer-open .workspace-main {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.main-column {
+  display: grid;
+  gap: 14px;
+  align-content: start;
 }
 
 .cards {
@@ -784,39 +794,235 @@ h2 {
   line-height: 1.2;
 }
 
-.news-placeholder {
+.news-feed {
   display: grid;
   gap: 14px;
   margin-top: 14px;
+  max-height: 460px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
-.news-placeholder-list {
+.news-feature,
+.news-item {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(119, 135, 159, 0.12);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.news-feature {
+  background:
+    linear-gradient(180deg, rgba(21, 101, 192, 0.04) 0%, rgba(255, 255, 255, 0.9) 100%),
+    rgba(255, 255, 255, 0.88);
+}
+
+.news-feature h3,
+.news-item h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.news-feature p,
+.news-item p {
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.news-feature-meta,
+.news-item-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.news-list {
   display: grid;
   gap: 10px;
 }
 
-.news-placeholder-list span {
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.76);
-  border: 1px solid rgba(119, 135, 159, 0.12);
+.social-feed {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  max-height: 460px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.news-feed::-webkit-scrollbar,
+.social-feed::-webkit-scrollbar {
+  width: 8px;
+}
+
+.news-feed::-webkit-scrollbar-thumb,
+.social-feed::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(91, 107, 134, 0.26);
+}
+
+.news-feed::-webkit-scrollbar-track,
+.social-feed::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.social-post {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 179, 0, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 179, 0, 0.05) 0%, rgba(255, 255, 255, 0.9) 100%),
+    rgba(255, 255, 255, 0.86);
+}
+
+.social-post h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.social-post p {
   color: var(--muted);
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.social-post-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.headline-ribbon {
+  position: relative;
+  z-index: 12;
+  margin-top: auto;
+  border: 1px solid rgba(91, 107, 134, 0.14);
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 247, 251, 0.98) 100%);
+  box-shadow: 0 -12px 28px rgba(45, 62, 92, 0.08);
+  overflow: hidden;
+}
+
+.headline-ribbon-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 28px;
+  min-width: 100%;
+  padding: 12px 18px;
+  white-space: nowrap;
+  animation: headline-ribbon-scroll 72s linear infinite;
+}
+
+.headline-ribbon:hover .headline-ribbon-track {
+  animation-play-state: paused;
+}
+
+.headline-ribbon-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1;
+}
+
+.headline-ribbon-source {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(21, 101, 192, 0.08);
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@keyframes headline-ribbon-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.news-source {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.news-source-bloomberg {
+  color: #1d3557;
+  background: rgba(29, 53, 87, 0.1);
+  border: 1px solid rgba(29, 53, 87, 0.14);
+}
+
+.news-source-truth {
+  color: #8b5e00;
+  background: rgba(255, 179, 0, 0.12);
+  border: 1px solid rgba(255, 179, 0, 0.18);
+}
+
+.news-time {
+  color: var(--muted);
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+.news-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.news-tags span {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(239, 243, 249, 0.94);
+  border: 1px solid rgba(119, 135, 159, 0.12);
+  color: #4d5d73;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .macro-list {
   display: grid;
-  gap: 10px;
-  margin-top: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .macro-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.75);
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.62);
   border: 1px solid rgba(119, 135, 159, 0.12);
 }
 
@@ -835,11 +1041,18 @@ h2 {
 }
 
 .macro-copy {
-  display: grid;
-  gap: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .macro-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.84rem;
   font-weight: 600;
 }
 
@@ -847,20 +1060,28 @@ h2 {
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  padding: 4px 8px;
+  padding: 3px 7px;
   border-radius: 999px;
   border: 1px solid rgba(91, 107, 134, 0.16);
   background: rgba(91, 107, 134, 0.06);
   color: #4d5d73;
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 600;
   line-height: 1;
+  flex: 0 0 auto;
 }
 
 .macro-values {
-  display: grid;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   justify-items: end;
-  gap: 2px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.macro-values strong {
+  font-size: 0.92rem;
 }
 
 .fear-greed-readings {

@@ -432,6 +432,16 @@ function updateChart() {
   const lastPrice = props.card.data?.price ?? points.at(-1)?.price ?? null;
   const windowStart = chartWindowStart.value;
   const windowEnd = chartWindowEnd.value;
+  const prevCloseLineData =
+    selectedRange.value === "1d" &&
+    typeof previousClose === "number" &&
+    windowStart &&
+    windowEnd
+      ? [
+          [windowStart.getTime(), previousClose],
+          [windowEnd.getTime(), previousClose],
+        ]
+      : [];
 
   chartInstance.setOption(
     {
@@ -506,8 +516,26 @@ function updateChart() {
         scale: true,
       },
       series: [
+        ...(prevCloseLineData.length
+          ? [
+              {
+                type: "line",
+                name: "Prev Close",
+                data: prevCloseLineData,
+                symbol: "none",
+                silent: true,
+                lineStyle: {
+                  color: "rgba(95, 113, 138, 0.72)",
+                  width: 1.1,
+                  type: "dashed",
+                },
+                z: 1,
+              },
+            ]
+          : []),
         {
           type: "line",
+          name: "Price",
           data: points.map((point) => [new Date(point.timestamp).getTime(), point.price]),
           smooth: false,
           symbol: "circle",
@@ -541,17 +569,6 @@ function updateChart() {
               width: 1,
             },
             data: [
-              ...(typeof previousClose === "number"
-                ? [
-                    {
-                      yAxis: previousClose,
-                      lineStyle: {
-                        color: "rgba(95, 113, 138, 0.3)",
-                        type: "dashed",
-                      },
-                    },
-                  ]
-                : []),
               ...(typeof lastPrice === "number"
                 ? [
                     {

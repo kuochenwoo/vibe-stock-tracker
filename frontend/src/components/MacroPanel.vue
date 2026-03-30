@@ -1,12 +1,17 @@
 <script setup>
-import { onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 
 const props = defineProps({
   items: {
     type: Array,
     default: () => [],
   },
+  collapsed: {
+    type: Boolean,
+    default: false,
+  },
 });
+const emit = defineEmits(["update:collapsed"]);
 
 const flashToneByCode = ref({});
 const previousPricesByCode = ref({});
@@ -96,6 +101,12 @@ onBeforeUnmount(() => {
   }
   flashTimers.clear();
 });
+
+const collapsed = computed(() => props.collapsed);
+
+function toggleCollapsed() {
+  emit("update:collapsed", !props.collapsed);
+}
 </script>
 
 <template>
@@ -105,16 +116,18 @@ onBeforeUnmount(() => {
         <p class="label">Market Macro</p>
         <h2>US Futures</h2>
       </div>
+      <button class="collapse-toggle" type="button" :aria-label="collapsed ? 'Expand US market macro panel' : 'Collapse US market macro panel'" @click="toggleCollapsed">
+        {{ collapsed ? "▾" : "−" }}
+      </button>
     </div>
 
-    <div class="macro-list">
+    <div v-if="!collapsed" class="macro-list">
       <article
         v-for="item in items"
         :key="item.code"
         :class="['macro-row', flashToneByCode[item.code]]"
       >
         <div class="macro-copy">
-          <p class="macro-name">{{ item.name }}</p>
           <span :class="['macro-badge', macroTone(item.change)]">{{ item.symbol }}</span>
         </div>
         <div class="macro-values">
