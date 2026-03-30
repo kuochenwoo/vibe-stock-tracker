@@ -52,6 +52,32 @@ class MarketService:
         await self.state_store.broadcast(snapshot)
         return snapshot
 
+    async def publish_tracked_tickers(self, tickers: list[TrackedTicker]) -> MarketSnapshot:
+        previous = await self.state_store.get_snapshot()
+        allowed_codes = {ticker.code for ticker in tickers}
+        allowed_codes.update(ticker.code for ticker in self.macro_tickers)
+        snapshot = MarketSnapshot(
+            updated_at=previous.updated_at,
+            tracked_tickers=tickers,
+            macro_tickers=self.macro_tickers,
+            markets={
+                code: quote
+                for code, quote in previous.markets.items()
+                if code in allowed_codes
+            },
+            errors=previous.errors,
+        )
+        await self.state_store.set_snapshot(snapshot)
+        await self.state_store.broadcast(snapshot)
+        return snapshot
+
+    async def warm_ticker_data(self, code: str) -> None:
+        await self.refresh_snapshot()
+        try:
+            await self.get_history(code)
+        except ValueError:
+            return
+
     async def get_snapshot(self) -> MarketSnapshot:
         return await self.state_store.get_snapshot()
 

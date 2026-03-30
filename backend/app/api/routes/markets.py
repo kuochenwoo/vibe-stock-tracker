@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 
 from app.api.dependencies import alert_service, market_service, preferences_service, provider, ticker_service
 from app.models.market import (
@@ -42,13 +42,17 @@ async def list_tickers() -> list[TrackedTicker]:
 
 
 @router.post("/tickers", response_model=list[TrackedTicker], status_code=status.HTTP_201_CREATED)
-async def add_ticker(request: CreateTrackedTickerRequest) -> list[TrackedTicker]:
+async def add_ticker(
+    request: CreateTrackedTickerRequest,
+    background_tasks: BackgroundTasks,
+) -> list[TrackedTicker]:
     try:
         tickers = ticker_service.add_ticker(request)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
-    await market_service.refresh_snapshot()
+    await market_service.publish_tracked_tickers(tickers)
+    background_tasks.add_task(market_service.warm_ticker_data, request.code.strip().upper())
     return tickers
 
 
