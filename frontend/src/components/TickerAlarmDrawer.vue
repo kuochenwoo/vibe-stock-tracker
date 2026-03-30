@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, watch } from "vue";
+import { computed, reactive, watch } from "vue";
 import AlertRuleList from "./AlertRuleList.vue";
 
 const props = defineProps({
@@ -19,6 +19,21 @@ const form = reactive({
   direction: "above",
   value: "",
 });
+
+const activeAlarmCount = computed(() => props.alerts.length);
+
+function formatPrice(value) {
+  if (typeof value !== "number") return "--";
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatDelta(value) {
+  if (typeof value !== "number") return "--";
+  return `${value > 0 ? "+" : ""}${value.toFixed(2)}`;
+}
 
 watch(
   () => props.ticker?.code,
@@ -47,6 +62,21 @@ function submit() {
         <h2>{{ ticker.name }}</h2>
       </div>
       <button class="icon-btn" type="button" @click="emit('close')">×</button>
+    </div>
+
+    <div class="alarm-drawer-hero">
+      <div>
+        <span class="alarm-drawer-kicker">Current Price</span>
+        <strong>{{ formatPrice(ticker.price) }}</strong>
+      </div>
+      <div>
+        <span class="alarm-drawer-kicker">Session Move</span>
+        <strong>{{ formatDelta(ticker.change) }}</strong>
+      </div>
+      <div>
+        <span class="alarm-drawer-kicker">Active Alarms</span>
+        <strong>{{ activeAlarmCount }}</strong>
+      </div>
     </div>
 
     <form class="alert-form" @submit.prevent="submit">

@@ -51,15 +51,21 @@ select {
 
 .settings-trigger {
   min-width: 118px;
-  border: 1px solid rgba(21, 101, 192, 0.14);
-  border-radius: 16px;
+  border: 1px solid rgba(88, 98, 116, 0.16);
+  border-radius: 18px;
   padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.98);
-  color: var(--accent);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 247, 250, 0.98) 100%);
+  color: #4f5a6d;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
   box-shadow: var(--shadow-1);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.settings-trigger:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-2);
 }
 
 .settings-menu {
@@ -68,7 +74,7 @@ select {
   min-width: 160px;
   padding: 8px;
   border: 1px solid rgba(112, 96, 68, 0.16);
-  border-radius: 16px;
+  border-radius: 18px;
   background: rgba(249, 246, 238, 0.98);
   box-shadow: var(--shadow-1);
 }
@@ -169,6 +175,13 @@ h2 {
     linear-gradient(180deg, rgba(21, 101, 192, 0.02) 0%, rgba(255, 255, 255, 0.9) 100%),
     var(--panel);
   box-shadow: var(--shadow-2);
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.market-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 42px rgba(45, 62, 92, 0.14);
+  border-color: rgba(21, 101, 192, 0.18);
 }
 
 .fear-greed-card {
@@ -420,6 +433,25 @@ h2 {
   color: var(--muted);
   font-size: 0.72rem;
   line-height: 1.2;
+}
+
+.news-placeholder {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.news-placeholder-list {
+  display: grid;
+  gap: 10px;
+}
+
+.news-placeholder-list span {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(119, 135, 159, 0.12);
+  color: var(--muted);
 }
 
 .fear-greed-readings {
@@ -772,6 +804,11 @@ h2 {
   padding: 24px;
 }
 
+.settings-modal-copy {
+  display: grid;
+  gap: 2px;
+}
+
 .settings-modal .ticker-manager {
   border: 0;
   box-shadow: none;
@@ -785,9 +822,38 @@ h2 {
   top: 16px;
   border: 1px solid rgba(91, 107, 134, 0.14);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: var(--shadow-1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 249, 253, 0.98) 100%);
+  box-shadow: var(--shadow-2);
   padding: 24px;
+}
+
+.alarm-drawer-hero {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.alarm-drawer-hero > div {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(119, 135, 159, 0.12);
+}
+
+.alarm-drawer-kicker {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.alarm-drawer-hero strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.05rem;
 }
 
 .errors-panel {

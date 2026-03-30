@@ -26,7 +26,14 @@ function toggleExpanded() {
 
 function openAlarmDrawer() {
   expanded.value = true;
-  emit("open-alarm", { code: props.card.code, name: props.card.title, symbol: props.card.subtitle });
+  emit("open-alarm", {
+    code: props.card.code,
+    name: props.card.title,
+    symbol: props.card.subtitle,
+    price: props.card.data?.price ?? null,
+    change: props.card.data?.change ?? null,
+    change_percent: props.card.data?.change_percent ?? null,
+  });
   actionMenuOpen.value = false;
 }
 

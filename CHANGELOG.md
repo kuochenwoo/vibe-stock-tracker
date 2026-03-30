@@ -1571,6 +1571,31 @@ The `Set alarm` tag now remains solid and visually stable when hovered in a coll
 ### Reason
 These changes were made to remove the semi-transparent look and keep the inline alarm control legible.
 
+## 2026-03-30 12:06:59
+
+### Change
+Applied a focused frontend polish pass across ticker cards, the alarm drawer, the settings corner, and the news placeholder.
+
+### STAR
+
+#### Situation
+The frontend was functionally in good shape, but several areas still felt utilitarian rather than cohesive: the ticker cards lacked a bit of motion and presence, the alarm drawer could carry more context, the settings corner felt plain, and the news placeholder still looked temporary.
+
+#### Task
+Improve the visual polish of the existing frontend without changing the core workflow.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) so alarm drawer opens carry richer ticker context.
+- Updated [TickerAlarmDrawer.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/TickerAlarmDrawer.vue) to add a more informative drawer hero with current price, session move, and active alarm count.
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) to improve the settings modal header and make the news placeholder feel more intentional.
+- Refined [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) with card hover lift, stronger settings corner styling, richer drawer presentation, and a better-designed news placeholder.
+
+#### Result
+The frontend now feels more deliberate and cohesive: cards have better presence, the alarm drawer provides clearer context, the settings corner feels more intentional, and the news area looks designed rather than temporary.
+
+### Reason
+These changes were made to raise the overall quality of the frontend before moving on to new features.
+
 ## 2026-03-30 11:21:25
 
 ### Change

@@ -96,13 +96,20 @@ function formatTime(value) {
               <div class="panel-head">
                 <div>
                   <p class="label">Realtime News</p>
-                  <h2>Feed placeholder</h2>
+                  <h2>Signal deck</h2>
                 </div>
               </div>
-              <p class="news-copy">
-                Reserved for live news modules. We can add Truth Social feeds here
-                later without reshaping the rest of the page.
-              </p>
+              <div class="news-placeholder">
+                <p class="news-copy">
+                  Reserved for live news modules. This area is ready for market-moving
+                  headlines, sentiment updates, and Truth Social feeds later.
+                </p>
+                <div class="news-placeholder-list">
+                  <span>Breaking market headlines</span>
+                  <span>Macro event watch</span>
+                  <span>Social signal stream</span>
+                </div>
+              </div>
             </section>
           </section>
 
@@ -130,7 +137,10 @@ function formatTime(value) {
       >
         <section class="settings-modal" role="dialog" aria-modal="true">
           <div class="panel-head">
-            <div></div>
+            <div class="settings-modal-copy">
+              <p class="label">Settings</p>
+              <h2>Tracked tickers</h2>
+            </div>
             <button class="icon-btn" type="button" @click="showTickerSettings = false">×</button>
           </div>
           <TickerManager
