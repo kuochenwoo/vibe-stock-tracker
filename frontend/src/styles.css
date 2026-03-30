@@ -252,16 +252,10 @@ h2 {
 }
 
 .card-head-collapsed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 196px var(--collapsed-controls-width, max-content);
   align-items: center;
-}
-
-.card-collapsed-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  flex: 1;
-  min-width: 0;
+  column-gap: 10px;
 }
 
 .card-head-actions {
@@ -275,6 +269,11 @@ h2 {
   z-index: 6;
 }
 
+.card-collapsed-copy {
+  grid-column: 1;
+  min-width: 0;
+}
+
 .badge {
   align-self: start;
   padding: 8px 12px;
@@ -283,6 +282,13 @@ h2 {
   color: var(--accent);
   background: rgba(21, 101, 192, 0.07);
   font-weight: 600;
+}
+
+.badge-collapsed {
+  align-self: center;
+  width: auto;
+  padding: 8px 12px;
+  text-align: center;
 }
 
 .gauge-source {
@@ -302,9 +308,49 @@ h2 {
 }
 
 .price-inline {
+  grid-column: 2;
   margin-top: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4ch;
+  align-items: center;
+  align-self: center;
+  width: 196px;
+  max-width: 196px;
   font-size: clamp(1.7rem, 2.6vw, 2.4rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
   white-space: nowrap;
+}
+
+.price-inline-integer {
+  text-align: right;
+  min-width: 0;
+}
+
+.price-inline-decimal {
+  text-align: left;
+}
+
+.price-up {
+  color: var(--positive);
+}
+
+.price-down {
+  color: var(--danger);
+}
+
+.price-flat {
+  color: #0f1f33;
+}
+
+.card-collapsed-controls {
+  grid-column: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: max-content;
 }
 
 .collapse-btn {
@@ -321,6 +367,9 @@ h2 {
 }
 
 .action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 32px;
   height: 32px;
   border: 1px solid rgba(21, 101, 192, 0.15);
@@ -328,8 +377,11 @@ h2 {
   background: #ffffff;
   color: var(--accent);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   line-height: 1;
+  padding-bottom: 1px;
   box-shadow: 0 6px 16px rgba(21, 101, 192, 0.08);
 }
 
@@ -633,6 +685,61 @@ h2 {
   gap: 8px;
 }
 
+.field-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-hint-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.field-hint-trigger {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(91, 107, 134, 0.24);
+  border-radius: 999px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+}
+
+.field-hint-tooltip {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  z-index: 8;
+  min-width: 220px;
+  padding: 8px 10px;
+  border: 1px solid rgba(91, 107, 134, 0.16);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 253, 0.98) 0%, rgba(238, 243, 249, 0.98) 100%);
+  color: var(--text);
+  font-size: 0.74rem;
+  line-height: 1.35;
+  box-shadow: var(--shadow-1);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%) translateX(-4px);
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+}
+
+.field-hint-wrap:hover .field-hint-tooltip,
+.field-hint-wrap:focus-within .field-hint-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
 .alert-form input,
 .alert-form select {
   width: 100%;
@@ -701,6 +808,14 @@ h2 {
   display: grid;
   gap: 6px;
   margin-top: 0;
+}
+
+.ticker-manager-title {
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
 }
 
 .alert-item {
@@ -795,13 +910,20 @@ h2 {
 }
 
 .settings-modal {
+  position: relative;
   width: min(560px, 100%);
   border: 1px solid rgba(91, 107, 134, 0.16);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(18px);
+  background: var(--panel-strong);
   box-shadow: var(--shadow-2);
   padding: 24px;
+}
+
+.settings-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
 }
 
 .settings-modal-copy {

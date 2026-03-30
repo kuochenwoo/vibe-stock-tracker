@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
 
 const CHART_HEIGHT = 44;
 const TOP_RIM_Y = 0.5;
@@ -16,6 +16,7 @@ const emit = defineEmits(["open-alarm"]);
 const expanded = ref(false);
 const actionMenuOpen = ref(false);
 const actionMenuRef = ref(null);
+const collapsedControlsRef = ref(null);
 
 function toggleExpanded() {
   expanded.value = !expanded.value;
@@ -43,6 +44,15 @@ function handleOutsideClick(event) {
   actionMenuOpen.value = false;
 }
 
+function syncCollapsedControlsWidth() {
+  const elements = Array.from(document.querySelectorAll(".card-collapsed-controls"));
+  const maxWidth = elements.reduce((largest, element) => {
+    return Math.max(largest, Math.ceil(element.getBoundingClientRect().width));
+  }, 0);
+
+  document.documentElement.style.setProperty("--collapsed-controls-width", `${maxWidth || 0}px`);
+}
+
 function formatPrice(value) {
   if (typeof value !== "number") return "--";
   return value.toLocaleString(undefined, {
@@ -59,6 +69,22 @@ function formatDelta(value) {
 function formatPercent(value) {
   if (typeof value !== "number") return "--";
   return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function formatCollapsedPriceParts(value) {
+  if (typeof value !== "number") {
+    return { integer: "--", decimal: "" };
+  }
+
+  const [integer, decimal] = value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).split(".");
+
+  return {
+    integer,
+    decimal: decimal ? `.${decimal}` : "",
+  };
 }
 
 const sparklinePoints = computed(() => {
@@ -103,6 +129,21 @@ const referenceLineY = computed(() => {
   return valueToY(props.card.data?.previous_close);
 });
 
+const collapsedPriceTone = computed(() => {
+  const price = props.card.data?.price;
+  const previousClose = props.card.data?.previous_close;
+
+  if (typeof price !== "number" || typeof previousClose !== "number") {
+    return "";
+  }
+
+  if (price > previousClose) return "price-up";
+  if (price < previousClose) return "price-down";
+  return "price-flat";
+});
+
+const collapsedPriceParts = computed(() => formatCollapsedPriceParts(props.card.data?.price));
+
 const intradayHigh = computed(() => {
   const values = chartValues.value;
   if (!values.length) return null;
@@ -132,10 +173,20 @@ function valueToY(value) {
 
 onMounted(() => {
   document.addEventListener("click", handleOutsideClick);
+  nextTick(syncCollapsedControlsWidth);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleOutsideClick);
+  nextTick(syncCollapsedControlsWidth);
+});
+
+onUpdated(() => {
+  nextTick(syncCollapsedControlsWidth);
+});
+
+watch(expanded, () => {
+  nextTick(syncCollapsedControlsWidth);
 });
 
 </script>
@@ -151,7 +202,7 @@ onBeforeUnmount(() => {
         <div class="card-head-actions">
           <span class="badge">{{ card.code }}</span>
           <div ref="actionMenuRef" class="card-action-menu">
-            <button class="action-btn" type="button" @click.stop="actionMenuOpen = !actionMenuOpen">+</button>
+            <button class="action-btn" type="button" aria-label="Open actions menu" @click.stop="actionMenuOpen = !actionMenuOpen">...</button>
             <button
               v-if="actionMenuOpen"
               class="action-menu-item"
@@ -169,17 +220,20 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-else class="card-head card-head-collapsed">
-      <div class="card-collapsed-main">
+      <div class="card-collapsed-copy">
         <div>
           <p class="label">{{ card.subtitle }}</p>
           <h2>{{ card.title }}</h2>
         </div>
-        <p class="price price-inline">{{ formatPrice(card.data?.price) }}</p>
       </div>
-      <div class="card-head-actions">
-        <span class="badge">{{ card.code }}</span>
-        <div ref="actionMenuRef" class="card-action-menu">
-          <button class="action-btn" type="button" @click.stop="actionMenuOpen = !actionMenuOpen">+</button>
+      <p :class="['price', 'price-inline', collapsedPriceTone]">
+        <span class="price-inline-integer">{{ collapsedPriceParts.integer }}</span>
+        <span class="price-inline-decimal">{{ collapsedPriceParts.decimal }}</span>
+      </p>
+      <div ref="collapsedControlsRef" class="card-collapsed-controls">
+        <span class="badge badge-collapsed">{{ card.code }}</span>
+        <div ref="actionMenuRef" class="card-action-menu card-action-menu-collapsed">
+          <button class="action-btn" type="button" aria-label="Open actions menu" @click.stop="actionMenuOpen = !actionMenuOpen">...</button>
           <button
             v-if="actionMenuOpen"
             class="action-menu-item"
@@ -189,7 +243,7 @@ onBeforeUnmount(() => {
             Set alarm
           </button>
         </div>
-        <button class="collapse-btn" type="button" @click="toggleExpanded">▾</button>
+        <button class="collapse-btn collapse-btn-collapsed" type="button" @click="toggleExpanded">▾</button>
       </div>
     </div>
 

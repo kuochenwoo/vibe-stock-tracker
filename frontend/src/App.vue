@@ -136,13 +136,7 @@ function formatTime(value) {
         @click.self="showTickerSettings = false"
       >
         <section class="settings-modal" role="dialog" aria-modal="true">
-          <div class="panel-head">
-            <div class="settings-modal-copy">
-              <p class="label">Settings</p>
-              <h2>Tracked tickers</h2>
-            </div>
-            <button class="icon-btn" type="button" @click="showTickerSettings = false">×</button>
-          </div>
+          <button class="icon-btn settings-modal-close" type="button" @click="showTickerSettings = false">×</button>
           <TickerManager
             :tickers="trackedTickers"
             :on-add="createTicker"

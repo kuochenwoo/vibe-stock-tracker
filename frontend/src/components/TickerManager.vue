@@ -47,11 +47,7 @@ async function submit() {
 
 <template>
   <section class="ticker-manager">
-    <div class="panel-head">
-      <div>
-        <p class="label">Tracked Tickers</p>
-      </div>
-    </div>
+    <p class="ticker-manager-title">TRACKED TICKERS</p>
 
     <div class="ticker-list">
       <article v-for="ticker in tickers" :key="ticker.code" class="ticker-row">
@@ -67,15 +63,53 @@ async function submit() {
 
     <form class="alert-form" @submit.prevent="submit">
       <label>
-        <span>Code</span>
+        <span class="field-label-row">
+          <span>Code</span>
+          <span class="field-hint-wrap">
+            <button
+              class="field-hint-trigger"
+              type="button"
+              aria-label="Code help"
+            >
+              ?
+            </button>
+            <span class="field-hint-tooltip">Stable app identifier used inside this project.</span>
+          </span>
+        </span>
         <input v-model="form.code" type="text" placeholder="GC=F" />
       </label>
       <label>
-        <span>Provider symbol</span>
+        <span class="field-label-row">
+          <span>Provider symbol</span>
+          <span class="field-hint-wrap">
+            <button
+              class="field-hint-trigger"
+              type="button"
+              aria-label="Provider symbol help"
+            >
+              ?
+            </button>
+            <span class="field-hint-tooltip">Exact symbol required by the market data provider.</span>
+          </span>
+        </span>
         <input v-model="form.symbol" type="text" placeholder="GC=F" />
       </label>
       <label>
-        <span>Display name</span>
+        <span class="field-label-row">
+          <span>Display name</span>
+          <span class="field-hint-wrap">
+            <button
+              class="field-hint-trigger"
+              type="button"
+              aria-label="Display name help"
+            >
+              ?
+            </button>
+            <span class="field-hint-tooltip">
+              Readable label shown on the frontend cards and settings.
+            </span>
+          </span>
+        </span>
         <input v-model="form.name" type="text" placeholder="Gold Futures" />
       </label>
       <button class="primary-btn" type="submit" :disabled="saving">

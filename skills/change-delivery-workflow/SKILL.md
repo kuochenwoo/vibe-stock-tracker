@@ -1,6 +1,6 @@
 ---
 name: change-delivery-workflow
-description: Handle post-change delivery hygiene for this project. Use when code, APIs, docs, or project files were modified and Codex must update the root CHANGELOG.md in STAR format with system datetime and update postman_collection.json when endpoints are created or changed, while leaving final verification and git operations to the user.
+description: Handle post-change delivery hygiene for this project. Use when code, APIs, docs, or project files were modified and Codex must keep the changelog index and daily changelog files plus postman_collection.json in sync, while batching minor tweaks into larger changelog entries when appropriate and leaving final verification and git operations to the user.
 ---
 
 # Change Delivery Workflow
@@ -15,9 +15,9 @@ Apply this workflow after substantive changes in this repository. Treat it as th
 
 ## Required Artifacts
 
-### Update `CHANGELOG.md`
+### Update The Changelog
 
-- Add a new entry for each new batch of changes.
+- Add a new entry for each substantive batch of changes.
 - Use the system datetime in `YYYY-MM-DD hh:mm:ss` format.
 - Use the existing STAR layout:
   Situation
@@ -26,6 +26,20 @@ Apply this workflow after substantive changes in this repository. Treat it as th
   Result
 - Include a short `Change` line and a `Reason` line.
 - Keep the entry specific to the current change set. Do not rewrite older entries unless they are wrong.
+- Do not add a new entry for every minor polish tweak or tiny wording adjustment.
+- Batch small related changes into one larger changelog entry when they belong to the same workstream.
+- Add or update the changelog when one of these is true:
+  - a feature, workflow, or behavior changed in a meaningful way
+  - an API, data contract, or project structure changed
+  - a bug fix materially changed user-visible behavior
+  - a set of minor related tweaks is large enough to summarize as one coherent batch
+- For very small follow-up tweaks, defer the changelog update until there is a meaningful batch to summarize.
+- When batching, summarize the set of related tweaks in one STAR entry instead of creating multiple tiny entries.
+- Keep the root `CHANGELOG.md` as an index only.
+- Store actual entries in daily files under `changelogs/YYYY-MM/YYYY-MM-DD.md`.
+- Keep exactly one changelog file per calendar day.
+- If the current day's file already exists, append the new substantive entry to that file instead of creating another file.
+- If the month folder does not exist yet, create it before writing the daily file.
 
 ### Update `postman_collection.json`
 
@@ -43,6 +57,8 @@ Apply this workflow after substantive changes in this repository. Treat it as th
 
 ## Repo-Specific Notes
 
-- The changelog file lives at the repository root: `CHANGELOG.md`.
+- The changelog index lives at the repository root: `CHANGELOG.md`.
+- Daily changelog files live under `changelogs/YYYY-MM/YYYY-MM-DD.md`.
 - The Postman collection lives at the repository root: `postman_collection.json`.
 - This workflow applies even for documentation-only or API-only changes when those artifacts are affected.
+- Prefer fewer, higher-signal changelog entries over a long stream of tiny low-signal entries.
