@@ -32,6 +32,27 @@ Environment variables:
 - `MARKET_DATA_PROVIDER=yfinance`
 - `MARKET_POLL_INTERVAL_SECONDS=5`
 
+Database direction:
+
+- Postgres is intended to become the source of truth for tracked tickers, aliases, and metadata.
+- Redis is intended to hold runtime market state such as the previous completed 5-minute close.
+- Initial infrastructure artifacts now exist at:
+  - [docker-compose.yml](/Users/guozhen_wu/Documents/vibe-code-test/docker-compose.yml)
+  - [001_market_schema.sql](/Users/guozhen_wu/Documents/vibe-code-test/infra/postgres/init/001_market_schema.sql)
+  - [redis-key-design.md](/Users/guozhen_wu/Documents/vibe-code-test/docs/redis-key-design.md)
+
+Start the databases locally:
+
+```bash
+cd /Users/guozhen_wu/Documents/vibe-code-test
+docker compose up -d
+```
+
+Default local service addresses:
+
+- Postgres: `postgresql://market_alerts:market_alerts@localhost:5432/market_alerts`
+- Redis: `redis://localhost:6379/0`
+
 Endpoints:
 
 - `GET /api/health`
