@@ -232,11 +232,16 @@ h2 {
 }
 
 .market-card {
+  position: relative;
   background:
     linear-gradient(180deg, rgba(21, 101, 192, 0.02) 0%, rgba(255, 255, 255, 0.9) 100%),
     var(--panel);
   box-shadow: var(--shadow-2);
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.market-card-menu-open {
+  z-index: 18;
 }
 
 .market-card:hover {
@@ -341,7 +346,7 @@ h2 {
 
 .card-action-menu {
   position: relative;
-  z-index: 6;
+  z-index: 20;
 }
 
 .card-collapsed-copy {
@@ -529,21 +534,39 @@ h2 {
   box-shadow: 0 6px 16px rgba(21, 101, 192, 0.08);
 }
 
-.action-menu-item {
+.action-menu-list {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
+  display: grid;
+  gap: 3px;
+  z-index: 12;
+}
+
+.action-menu-item {
   border: 1px solid rgba(91, 107, 134, 0.14);
-  border-radius: 14px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 7px 10px;
   background: #ffffff;
   color: var(--accent);
   white-space: nowrap;
   cursor: pointer;
   box-shadow: var(--shadow-1);
-  z-index: 12;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1.1;
   transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.action-menu-item-delete {
+  color: var(--danger);
+  border-color: rgba(209, 67, 67, 0.18);
+}
+
+.action-menu-item-delete:hover {
+  background: rgba(248, 224, 224, 0.96);
+  box-shadow: 0 12px 24px rgba(209, 67, 67, 0.12);
 }
 
 .action-menu-item:hover {

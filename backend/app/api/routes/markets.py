@@ -57,13 +57,17 @@ async def add_ticker(
 
 
 @router.delete("/tickers/{code}", response_model=list[TrackedTicker])
-async def delete_ticker(code: str) -> list[TrackedTicker]:
+async def delete_ticker(
+    code: str,
+    background_tasks: BackgroundTasks,
+) -> list[TrackedTicker]:
     try:
         tickers = ticker_service.delete_ticker(code)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
-    await market_service.refresh_snapshot()
+    await market_service.publish_tracked_tickers(tickers)
+    background_tasks.add_task(market_service.refresh_snapshot)
     return tickers
 
 

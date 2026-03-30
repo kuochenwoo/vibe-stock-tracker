@@ -94,6 +94,18 @@ export function useMarketStream() {
     persistTickerOrder(tickerOrder.value);
     hasLocalTickerOrder.value = tickerOrder.value.length > 0;
     panelOrderDirty.value = true;
+
+    snapshot.value = {
+      ...snapshot.value,
+      tracked_tickers: (snapshot.value.tracked_tickers ?? []).filter((ticker) => ticker.code !== code),
+      markets: Object.fromEntries(
+        Object.entries(snapshot.value.markets ?? {}).filter(([marketCode]) => marketCode !== code),
+      ),
+    };
+
+    const nextHistory = { ...priceHistory.value };
+    delete nextHistory[code];
+    priceHistory.value = nextHistory;
   }
 
   function setTickerOrder(codes) {

@@ -316,6 +316,7 @@ onBeforeUnmount(() => {
             <template #item="{ element }">
               <MarketCard
                 :card="element"
+                :on-delete="deleteTicker"
                 :has-active-alarm="marketsWithAlerts.has(element.code)"
                 :alert-summary="alertSummaryByMarket.get(element.code) ?? { count: 0, alerts: [] }"
                 :layout-version="layoutVersion"

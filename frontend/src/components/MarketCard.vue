@@ -12,6 +12,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  onDelete: {
+    type: Function,
+    default: null,
+  },
   hasActiveAlarm: {
     type: Boolean,
     default: false,
@@ -35,6 +39,7 @@ const chartCanvasRef = ref(null);
 
 let chartInstance = null;
 let resizeObserver = null;
+const ACTION_MENU_EVENT = "market-card-action-menu-open";
 
 function toggleExpanded() {
   expanded.value = !expanded.value;
@@ -65,9 +70,35 @@ function openAlarmDrawer() {
   actionMenuOpen.value = false;
 }
 
+async function handleDeleteTicker() {
+  const confirmed = window.confirm(`Delete ${props.card.code} from tracked tickers?`);
+  if (!confirmed) {
+    return;
+  }
+  actionMenuOpen.value = false;
+  await props.onDelete?.(props.card.code);
+}
+
+function toggleActionMenu() {
+  const nextOpen = !actionMenuOpen.value;
+  if (nextOpen) {
+    window.dispatchEvent(
+      new CustomEvent(ACTION_MENU_EVENT, {
+        detail: { code: props.card.code },
+      }),
+    );
+  }
+  actionMenuOpen.value = nextOpen;
+}
+
 function handleOutsideClick(event) {
   if (!actionMenuOpen.value) return;
   if (actionMenuRef.value?.contains(event.target)) return;
+  actionMenuOpen.value = false;
+}
+
+function handleOtherMenuOpened(event) {
+  if (event.detail?.code === props.card.code) return;
   actionMenuOpen.value = false;
 }
 
@@ -335,12 +366,14 @@ function updateChart() {
 
 onMounted(() => {
   document.addEventListener("click", handleOutsideClick);
+  window.addEventListener(ACTION_MENU_EVENT, handleOtherMenuOpened);
   nextTick(syncCollapsedControlsWidth);
   nextTick(initChart);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleOutsideClick);
+  window.removeEventListener(ACTION_MENU_EVENT, handleOtherMenuOpened);
   nextTick(syncCollapsedControlsWidth);
   disposeChart();
   emit("expanded-change", {
@@ -388,7 +421,7 @@ watch(
 </script>
 
 <template>
-  <article class="market-card">
+  <article :class="['market-card', { 'market-card-menu-open': actionMenuOpen }]">
     <div v-if="expanded">
       <div class="card-head">
         <div>
@@ -413,15 +446,26 @@ watch(
         <div class="card-head-actions">
           <span class="badge">{{ card.code }}</span>
           <div ref="actionMenuRef" class="card-action-menu">
-            <button class="action-btn" type="button" aria-label="Open actions menu" @click.stop="actionMenuOpen = !actionMenuOpen">...</button>
-            <button
+            <button class="action-btn" type="button" aria-label="Open actions menu" @click.stop="toggleActionMenu">...</button>
+            <div
               v-if="actionMenuOpen"
-              class="action-menu-item"
-              type="button"
-              @click.stop="openAlarmDrawer"
+              class="action-menu-list"
             >
-              Set alarm
-            </button>
+              <button
+                class="action-menu-item"
+                type="button"
+                @click.stop="openAlarmDrawer"
+              >
+                Set alarm
+              </button>
+              <button
+                class="action-menu-item action-menu-item-delete"
+                type="button"
+                @click.stop="handleDeleteTicker"
+              >
+                Delete ticker
+              </button>
+            </div>
           </div>
           <button class="collapse-btn" type="button" @click="toggleExpanded">−</button>
         </div>
@@ -475,15 +519,26 @@ watch(
       <div ref="collapsedControlsRef" class="card-collapsed-controls">
         <span class="badge badge-collapsed">{{ card.code }}</span>
         <div ref="actionMenuRef" class="card-action-menu card-action-menu-collapsed">
-          <button class="action-btn" type="button" aria-label="Open actions menu" @click.stop="actionMenuOpen = !actionMenuOpen">...</button>
-          <button
+          <button class="action-btn" type="button" aria-label="Open actions menu" @click.stop="toggleActionMenu">...</button>
+          <div
             v-if="actionMenuOpen"
-            class="action-menu-item"
-            type="button"
-            @click.stop="openAlarmDrawer"
+            class="action-menu-list"
           >
-            Set alarm
-          </button>
+            <button
+              class="action-menu-item"
+              type="button"
+              @click.stop="openAlarmDrawer"
+            >
+              Set alarm
+            </button>
+            <button
+              class="action-menu-item action-menu-item-delete"
+              type="button"
+              @click.stop="handleDeleteTicker"
+            >
+              Delete ticker
+            </button>
+          </div>
         </div>
         <button class="collapse-btn collapse-btn-collapsed" type="button" @click="toggleExpanded">▾</button>
       </div>
