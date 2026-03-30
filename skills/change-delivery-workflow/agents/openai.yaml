@@ -1,4 +1,4 @@
 interface:
   display_name: "Change Delivery Workflow"
   short_description: "Maintain changelog and Postman artifacts with batched changelog updates."
-  default_prompt: "Use this skill when finishing repository changes that require daily changelog and Postman maintenance, batching minor tweaks into larger changelog entries when appropriate while keeping one changelog file per day under month folders and leaving final verification and git operations to the user."
+  default_prompt: "Use this skill when finishing repository changes that require daily changelog and Postman maintenance, batching minor tweaks into larger changelog entries when appropriate, using grouped FEAT and FIX labels, keeping one changelog file per day under month folders, and leaving final verification and git operations to the user."

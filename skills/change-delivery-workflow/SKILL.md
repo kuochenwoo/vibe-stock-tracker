@@ -19,7 +19,7 @@ Apply this workflow after substantive changes in this repository. Treat it as th
 
 - Add a new entry for each substantive batch of changes.
 - Use the system datetime in `YYYY-MM-DD hh:mm:ss` format.
-- Use the existing STAR layout:
+- Use the existing STAR layout for feature entries:
   Situation
   Task
   Action
@@ -40,6 +40,13 @@ Apply this workflow after substantive changes in this repository. Treat it as th
 - Keep exactly one changelog file per calendar day.
 - If the current day's file already exists, append the new substantive entry to that file instead of creating another file.
 - If the month folder does not exist yet, create it before writing the daily file.
+- Formalize entry types:
+  - For new features or meaningful feature expansions, group related work into one main feature entry and label it as `<span style="color:#1b8f59;font-weight:700;">FEAT</span>`.
+  - Feature entries should use STAR and represent the main feature batch rather than many small sub-entries.
+  - For bug fixes, label entries as `<span style="color:#d14343;font-weight:700;">FIX</span>`.
+  - Bug-fix entries do not need a full STAR breakdown if the fixes are straightforward; a concise grouped summary is enough.
+  - When multiple related bugs are fixed in the same batch, list them together under one `FIX` entry instead of creating one entry per bug.
+  - Avoid mixing unrelated feature and fix work in the same entry unless the change set is inseparable.
 
 ### Update `postman_collection.json`
 
