@@ -62,6 +62,7 @@ market_service = MarketService(
     state_store=state_store,
     ticker_service=ticker_service,
     cache=market_cache,
+    daily_bar_repository=daily_bar_repository,
     macro_tickers=[
         TrackedTicker(
             code=item["code"],

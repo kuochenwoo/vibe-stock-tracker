@@ -44,14 +44,14 @@ class RedisMarketCache:
         }
         await self.client.set(_prev_5m_key(quote.code), json.dumps(payload))
 
-    async def get_chart_history(self, code: str) -> MarketHistoryResponse | None:
-        payload = await self.client.get(_history_key(code))
+    async def get_chart_history(self, cache_key: str) -> MarketHistoryResponse | None:
+        payload = await self.client.get(_history_key(cache_key))
         if not payload:
             return None
         return MarketHistoryResponse.model_validate_json(payload)
 
-    async def set_chart_history(self, history: MarketHistoryResponse) -> None:
-        await self.client.set(_history_key(history.code), history.model_dump_json())
+    async def set_chart_history(self, cache_key: str, history: MarketHistoryResponse) -> None:
+        await self.client.set(_history_key(cache_key), history.model_dump_json())
 
 
 def _latest_quote_key(code: str) -> str:
@@ -62,8 +62,8 @@ def _prev_5m_key(code: str) -> str:
     return f"market:ref:5m:prev_close:{code}"
 
 
-def _history_key(code: str) -> str:
-    return f"market:history:1d:5m:{code}"
+def _history_key(cache_key: str) -> str:
+    return f"market:history:{cache_key}"
 
 
 def _metadata_value(metadata: dict[str, Any], key: str) -> Any:

@@ -895,10 +895,121 @@ h2 {
   gap: 12px;
 }
 
-.sparkline-head strong {
+.chart-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.chart-range-switch,
+.ma-menu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ma-menu {
+  padding-bottom: 10px;
+  margin-bottom: -10px;
+}
+
+.chart-range-btn,
+.ma-menu-item {
+  border: 1px solid rgba(91, 107, 134, 0.14);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #ffffff;
   color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(58, 76, 102, 0.08);
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.chart-range-btn:hover,
+.ma-menu-item:hover {
+  background: rgba(220, 236, 255, 0.94);
+  color: var(--accent);
+  border-color: rgba(21, 101, 192, 0.18);
+}
+
+.chart-range-btn-active,
+.ma-menu-item-active {
+  background: rgba(21, 101, 192, 0.1);
+  color: var(--accent);
+  border-color: rgba(21, 101, 192, 0.2);
+}
+
+.ma-trigger {
+  min-width: 46px;
+}
+
+.ma-menu-list {
+  position: absolute;
+  top: calc(100% - 2px);
+  right: 0;
+  display: none;
+  gap: 0;
+  z-index: 16;
+}
+
+.ma-menu:hover .ma-menu-list,
+.ma-menu:focus-within .ma-menu-list {
+  display: grid;
+}
+
+.ma-menu-list .ma-menu-item {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ma-menu-list .ma-menu-item:first-child {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.ma-menu-list .ma-menu-item:last-child {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.ma-menu-list .ma-menu-item + .ma-menu-item {
+  margin-top: -1px;
+}
+
+.ma-readings {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ma-reading {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--ma-color) 24%, rgba(91, 107, 134, 0.12));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ma-color) 8%, white);
+  color: var(--text);
+  font-size: 0.76rem;
+  line-height: 1;
+}
+
+.ma-reading-label {
+  color: var(--ma-color);
+  font-weight: 700;
+}
+
+.ma-reading strong {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .sparkline-frame {

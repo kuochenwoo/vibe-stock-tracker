@@ -7,6 +7,17 @@ import { computed, nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch }
 
 echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer]);
 
+const DEFAULT_API_BASE =
+  typeof window === "undefined"
+    ? "http://127.0.0.1:8000"
+    : `${window.location.protocol}//${window.location.hostname}:8000`;
+const API_BASE = import.meta.env.VITE_API_BASE ?? DEFAULT_API_BASE;
+const MOVING_AVERAGE_WINDOWS = [
+  { key: "ma20", label: "MA20", window: 20, color: "#f59e0b" },
+  { key: "ma30", label: "MA30", window: 30, color: "#7c5cff" },
+  { key: "ma60", label: "MA60", window: 60, color: "#00a3a3" },
+];
+
 const props = defineProps({
   card: {
     type: Object,
@@ -15,6 +26,10 @@ const props = defineProps({
   onDelete: {
     type: Function,
     default: null,
+  },
+  isExpanded: {
+    type: Boolean,
+    default: false,
   },
   isDeleting: {
     type: Boolean,
@@ -35,12 +50,17 @@ const props = defineProps({
 });
 const emit = defineEmits(["open-alarm", "expanded-change"]);
 
-const expanded = ref(false);
 const actionMenuOpen = ref(false);
 const actionMenuRef = ref(null);
 const collapsedControlsRef = ref(null);
 const chartCanvasRef = ref(null);
 const backgroundFlashTone = ref("");
+const selectedRange = ref("1d");
+const yearHistory = ref(null);
+const yearHistoryLoading = ref(false);
+const yearHistoryError = ref("");
+const activeMovingAverages = ref([]);
+const maMenuOpen = ref(false);
 
 let chartInstance = null;
 let resizeObserver = null;
@@ -48,19 +68,18 @@ let backgroundFlashTimer = null;
 const ACTION_MENU_EVENT = "market-card-action-menu-open";
 
 function toggleExpanded() {
-  expanded.value = !expanded.value;
-  if (!expanded.value) {
+  const nextExpanded = !props.isExpanded;
+  if (!nextExpanded) {
     actionMenuOpen.value = false;
     disposeChart();
   }
   emit("expanded-change", {
     code: props.card.code,
-    expanded: expanded.value,
+    expanded: nextExpanded,
   });
 }
 
 function openAlarmDrawer() {
-  expanded.value = true;
   emit("expanded-change", {
     code: props.card.code,
     expanded: true,
@@ -159,8 +178,29 @@ function formatCollapsedPriceParts(value) {
   };
 }
 
+const activeHistoryState = computed(() => {
+  if (selectedRange.value === "1y") {
+    return {
+      points: yearHistory.value?.points ?? [],
+      startedAt: yearHistory.value?.startedAt ?? null,
+      endedAt: yearHistory.value?.endedAt ?? null,
+      loading: yearHistoryLoading.value,
+      error: yearHistoryError.value,
+    };
+  }
+
+  const points = props.card.history ?? [];
+  return {
+    points,
+    startedAt: props.card.historyStartedAt ?? points[0]?.timestamp ?? null,
+    endedAt: points.at(-1)?.timestamp ?? null,
+    loading: false,
+    error: "",
+  };
+});
+
 const chartPlotPoints = computed(() => {
-  const history = props.card.history ?? [];
+  const history = activeHistoryState.value.points ?? [];
   return history
     .map((point) => ({
       timestamp: point?.timestamp ?? null,
@@ -170,7 +210,7 @@ const chartPlotPoints = computed(() => {
 });
 
 const chartWindowStart = computed(() => {
-  const explicitStart = props.card.historyStartedAt;
+  const explicitStart = activeHistoryState.value.startedAt;
   if (explicitStart) {
     const parsed = new Date(explicitStart);
     if (!Number.isNaN(parsed.getTime())) {
@@ -191,6 +231,16 @@ const chartWindowStart = computed(() => {
 
 const chartWindowEnd = computed(() => {
   if (!chartWindowStart.value) return null;
+  if (selectedRange.value === "1y") {
+    const explicitEnd = activeHistoryState.value.endedAt;
+    if (explicitEnd) {
+      const parsed = new Date(explicitEnd);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return new Date(chartWindowStart.value.getTime() + 365 * 24 * 60 * 60 * 1000);
+  }
   return new Date(chartWindowStart.value.getTime() + 24 * 60 * 60 * 1000);
 });
 
@@ -234,15 +284,115 @@ const marketStateTone = computed(() => {
   return props.card.data?.market_state === "LIVE" ? "metric-live" : "metric-offline";
 });
 
+const movingAverageOptions = computed(() =>
+  MOVING_AVERAGE_WINDOWS.map((option) => ({
+    ...option,
+    active: activeMovingAverages.value.includes(option.key),
+  })),
+);
+
 function formatHoverTime(value) {
   if (!value) return "--";
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
+  const formatOptions =
+    selectedRange.value === "1y"
+      ? {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }
+      : {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        };
+
+  return new Intl.DateTimeFormat(undefined, formatOptions).format(new Date(value));
 }
+
+function setRange(nextRange) {
+  if (selectedRange.value === nextRange) return;
+  selectedRange.value = nextRange;
+}
+
+function toggleMovingAverage(key) {
+  activeMovingAverages.value = activeMovingAverages.value.includes(key)
+    ? activeMovingAverages.value.filter((item) => item !== key)
+    : [...activeMovingAverages.value, key];
+}
+
+function openMaMenu() {
+  maMenuOpen.value = true;
+}
+
+function closeMaMenu() {
+  maMenuOpen.value = false;
+}
+
+async function ensureYearHistory() {
+  if (yearHistory.value || yearHistoryLoading.value) {
+    return;
+  }
+
+  yearHistoryLoading.value = true;
+  yearHistoryError.value = "";
+  try {
+    const response = await fetch(`${API_BASE}/api/markets/${props.card.code}/history?range=1y`);
+    if (!response.ok) {
+      throw new Error("Failed to load 1Y history.");
+    }
+
+    const payload = await response.json();
+    yearHistory.value = {
+      points: Array.isArray(payload?.points)
+        ? payload.points
+            .map((point) => ({
+              timestamp: point.timestamp,
+              price: Number(point.price),
+            }))
+            .filter((point) => Number.isFinite(point.price))
+        : [],
+      startedAt: payload?.started_at ?? payload?.points?.[0]?.timestamp ?? null,
+      endedAt:
+        payload?.ended_at ??
+        (Array.isArray(payload?.points) && payload.points.length
+          ? payload.points[payload.points.length - 1].timestamp
+          : null),
+    };
+  } catch (error) {
+    yearHistoryError.value = error instanceof Error ? error.message : "Failed to load 1Y history.";
+  } finally {
+    yearHistoryLoading.value = false;
+  }
+}
+
+const movingAverageSeries = computed(() => {
+  if (selectedRange.value !== "1y") {
+    return [];
+  }
+
+  return movingAverageOptions.value
+    .filter((option) => option.active)
+    .map((option) => ({
+      ...option,
+      points: buildMovingAverageSeries(chartPlotPoints.value, option.window),
+    }))
+    .filter((option) => option.points.some((point) => point[1] != null));
+});
+
+const movingAverageReadings = computed(() =>
+  movingAverageSeries.value
+    .map((series) => {
+      const lastPoint = [...series.points].reverse().find((point) => point[1] != null);
+      return {
+        key: series.key,
+        label: series.label,
+        color: series.color,
+        value: lastPoint?.[1] ?? null,
+      };
+    })
+    .filter((series) => typeof series.value === "number"),
+);
 
 function initChart() {
   if (!chartCanvasRef.value) return;
@@ -308,12 +458,29 @@ function updateChart() {
         extraCssText:
           "box-shadow: 0 14px 28px rgba(58, 76, 102, 0.16); border-radius: 12px;",
         formatter(params) {
-          const item = Array.isArray(params) ? params[0] : params;
-          const point = points[item.dataIndex];
+          const items = Array.isArray(params) ? params : [params];
+          const priceItem = items.find((item) => item.seriesType === "line" && item.seriesName !== "MA20" && item.seriesName !== "MA30" && item.seriesName !== "MA60") ?? items[0];
+          const point = points[priceItem?.dataIndex];
+          const maRows = items
+            .filter((item) => item.seriesName === "MA20" || item.seriesName === "MA30" || item.seriesName === "MA60")
+            .filter((item) => Array.isArray(item.data) && item.data[1] != null)
+            .map(
+              (item) => `
+                <span style="display:flex;justify-content:space-between;gap:12px;">
+                  <span style="color:${item.color};font-weight:700;">${item.seriesName}</span>
+                  <strong style="font-size:12px;font-weight:700;">${formatPrice(item.data[1])}</strong>
+                </span>
+              `,
+            )
+            .join("");
+
           return `
-            <div style="display:grid;gap:4px;">
-              <strong style="font-size:13px;">${formatPrice(point?.price)}</strong>
-              <span style="color:#627085;font-size:11px;">${formatHoverTime(point?.timestamp)}</span>
+            <div style="display:grid;grid-template-columns:auto ${maRows ? "auto" : ""};gap:12px;align-items:start;">
+              <div style="display:grid;gap:4px;">
+                <strong style="font-size:13px;">${formatPrice(point?.price)}</strong>
+                <span style="color:#627085;font-size:11px;">${formatHoverTime(point?.timestamp)}</span>
+              </div>
+              ${maRows ? `<div style="display:grid;gap:4px;min-width:108px;padding-left:12px;border-left:1px solid rgba(91, 107, 134, 0.14);">${maRows}</div>` : ""}
             </div>
           `;
         },
@@ -399,10 +566,39 @@ function updateChart() {
             ],
           },
         },
+        ...movingAverageSeries.value.map((series) => ({
+          type: "line",
+          name: series.label,
+          data: series.points,
+          smooth: false,
+          symbol: "none",
+          connectNulls: false,
+          lineStyle: {
+            color: series.color,
+            width: 1,
+            opacity: 0.95,
+          },
+          emphasis: {
+            disabled: true,
+          },
+        })),
       ],
     },
     true,
   );
+}
+
+function buildMovingAverageSeries(points, windowSize) {
+  const closes = points.map((point) => point.price);
+  return points.map((point, index) => {
+    if (index + 1 < windowSize) {
+      return [new Date(point.timestamp).getTime(), null];
+    }
+
+    const window = closes.slice(index + 1 - windowSize, index + 1);
+    const average = window.reduce((sum, value) => sum + value, 0) / window.length;
+    return [new Date(point.timestamp).getTime(), Number(average.toFixed(6))];
+  });
 }
 
 onMounted(() => {
@@ -430,32 +626,52 @@ onUpdated(() => {
   nextTick(syncCollapsedControlsWidth);
 });
 
-watch(expanded, () => {
-  nextTick(syncCollapsedControlsWidth);
-  if (expanded.value) {
-    nextTick(() => {
-      initChart();
-      chartInstance?.resize();
-      updateChart();
-    });
-  } else {
-    disposeChart();
-  }
-});
+watch(
+  () => props.isExpanded,
+  (isExpanded) => {
+    nextTick(syncCollapsedControlsWidth);
+    if (isExpanded) {
+      ensureYearHistory();
+      nextTick(() => {
+        initChart();
+        chartInstance?.resize();
+        updateChart();
+      });
+    } else {
+      actionMenuOpen.value = false;
+      disposeChart();
+    }
+  },
+);
+
+watch(
+  selectedRange,
+  (nextRange) => {
+    if (nextRange === "1y") {
+      ensureYearHistory();
+    } else {
+      activeMovingAverages.value = [];
+      maMenuOpen.value = false;
+    }
+    nextTick(updateChart);
+  },
+);
 
 watch(
   () => props.layoutVersion,
   () => {
-    if (!expanded.value) return;
+    if (!props.isExpanded) return;
     nextTick(() => {
-      chartInstance?.resize();
-      updateChart();
+      window.requestAnimationFrame(() => {
+        chartInstance?.resize();
+        updateChart();
+      });
     });
   },
 );
 
 watch(
-  [chartPlotPoints, () => props.card.data?.previous_close, () => props.card.data?.price],
+  [chartPlotPoints, movingAverageSeries, () => props.card.data?.previous_close, () => props.card.data?.price, selectedRange],
   () => {
     nextTick(updateChart);
   },
@@ -498,7 +714,7 @@ watch(
       },
     ]"
   >
-    <div v-if="expanded">
+    <div v-if="isExpanded">
       <div class="card-head">
         <div>
           <div class="card-subtitle-row">
@@ -621,10 +837,58 @@ watch(
       </div>
     </div>
 
-    <div v-if="expanded">
+    <div v-if="isExpanded">
       <div class="sparkline-shell">
         <div class="sparkline-head">
-          <strong>1D</strong>
+          <div class="chart-toolbar">
+            <div class="chart-range-switch">
+              <button
+                :class="['chart-range-btn', { 'chart-range-btn-active': selectedRange === '1d' }]"
+                type="button"
+                @click="setRange('1d')"
+              >
+                1D
+              </button>
+              <button
+                :class="['chart-range-btn', { 'chart-range-btn-active': selectedRange === '1y' }]"
+                type="button"
+                @click="setRange('1y')"
+              >
+                1Y
+              </button>
+            </div>
+
+            <div
+              v-if="selectedRange === '1y'"
+              class="ma-menu"
+              @mouseenter="openMaMenu"
+              @mouseleave="closeMaMenu"
+            >
+              <button class="chart-range-btn ma-trigger" type="button">MA</button>
+              <div v-if="maMenuOpen" class="ma-menu-list">
+                <button
+                  v-for="option in movingAverageOptions"
+                  :key="option.key"
+                  :class="['ma-menu-item', { 'ma-menu-item-active': option.active }]"
+                  type="button"
+                  @click="toggleMovingAverage(option.key)"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div v-if="selectedRange === '1y' && movingAverageReadings.length" class="ma-readings">
+            <span
+              v-for="reading in movingAverageReadings"
+              :key="reading.key"
+              class="ma-reading"
+              :style="{ '--ma-color': reading.color }"
+            >
+              <span class="ma-reading-label">{{ reading.label }}</span>
+              <strong>{{ formatPrice(reading.value) }}</strong>
+            </span>
+          </div>
         </div>
         <div class="sparkline-frame">
           <div
@@ -642,7 +906,9 @@ watch(
           <div v-if="intradayLow !== null" class="price-level price-level-low price-level-right-outer price-level-bottom">
             L {{ formatPrice(intradayLow) }}
           </div>
-          <p v-if="chartPlotPoints.length === 0" class="sparkline-empty">Waiting for price history.</p>
+          <p v-if="activeHistoryState.loading" class="sparkline-empty">Loading 1Y history.</p>
+          <p v-else-if="activeHistoryState.error" class="sparkline-empty">{{ activeHistoryState.error }}</p>
+          <p v-else-if="chartPlotPoints.length === 0" class="sparkline-empty">Waiting for price history.</p>
         </div>
       </div>
 

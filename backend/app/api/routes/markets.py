@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 
 from app.api.dependencies import alert_service, market_service, moving_average_service, preferences_service, provider, ticker_service
 from app.models.market import (
@@ -25,9 +25,12 @@ async def get_markets() -> MarketSnapshot:
 
 
 @router.get("/markets/{code}/history", response_model=MarketHistoryResponse)
-async def get_market_history(code: str) -> MarketHistoryResponse:
+async def get_market_history(
+    code: str,
+    range: str = Query("1d", pattern="^(1d|1y)$"),
+) -> MarketHistoryResponse:
     try:
-        return await market_service.get_history(code)
+        return await market_service.get_history(code, range_value=range)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 

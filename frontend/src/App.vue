@@ -43,6 +43,7 @@ const layoutVersion = ref(0);
 const fearGreedCollapsed = ref(false);
 const showTopRightClock = ref(true);
 const removingTickerCodes = ref([]);
+const expandedTickerCode = ref(null);
 
 let localClockTimer;
 
@@ -232,9 +233,23 @@ function handleDragEnd() {
   setTickerOrder(displayCards.value.map((card) => card.code));
 }
 
-function handleCloseAlarmDrawer() {
+async function handleCloseAlarmDrawer() {
   alarmDrawerTicker.value = null;
+  expandedTickerCode.value = null;
+  await nextTick();
   layoutVersion.value += 1;
+  window.requestAnimationFrame(() => {
+    window.dispatchEvent(new Event("resize"));
+  });
+}
+
+function handleExpandedChange(payload) {
+  expandedTickerCode.value = payload.expanded ? payload.code : null;
+}
+
+function handleOpenAlarm(ticker) {
+  expandedTickerCode.value = ticker.code;
+  alarmDrawerTicker.value = ticker;
 }
 
 async function handleDeleteTicker(code) {
@@ -242,6 +257,9 @@ async function handleDeleteTicker(code) {
   removingTickerCodes.value = [...new Set([...removingTickerCodes.value, code])];
   if (alarmDrawerTicker.value?.code === code) {
     handleCloseAlarmDrawer();
+  }
+  if (expandedTickerCode.value === code) {
+    expandedTickerCode.value = null;
   }
   try {
     await nextTick();
@@ -261,6 +279,9 @@ watch(
     displayCards.value = nextCards
       .filter((card) => !removingTickerCodes.value.includes(card.code))
       .map((card) => ({ ...card }));
+    if (expandedTickerCode.value && !nextCards.some((card) => card.code === expandedTickerCode.value)) {
+      expandedTickerCode.value = null;
+    }
   },
   { immediate: true },
 );
@@ -339,17 +360,19 @@ onBeforeUnmount(() => {
             <template #item="{ element }">
               <MarketCard
                 :card="element"
+                :is-expanded="expandedTickerCode === element.code"
                 :on-delete="handleDeleteTicker"
                 :is-deleting="removingTickerCodes.includes(element.code)"
                 :has-active-alarm="marketsWithAlerts.has(element.code)"
                 :alert-summary="alertSummaryByMarket.get(element.code) ?? { count: 0, alerts: [] }"
                 :layout-version="layoutVersion"
-                @open-alarm="alarmDrawerTicker = $event"
+                @expanded-change="handleExpandedChange"
+                @open-alarm="handleOpenAlarm"
               />
             </template>
           </draggable>
 
-          <section v-if="!alarmDrawerTicker" class="sidebar">
+          <section v-if="!alarmDrawerTicker && !expandedTickerCode" class="sidebar">
             <MacroPanel v-if="macroItems.length" :items="macroItems" />
 
             <FearGreedGauge

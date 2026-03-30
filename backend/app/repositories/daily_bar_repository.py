@@ -50,6 +50,21 @@ class DailyBarRepository:
                     )
             connection.commit()
 
+    def get_latest_trading_date(self, ticker_code: str):
+        with self.database.connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT MAX(trading_date) AS latest_trading_date
+                    FROM ticker_daily_bars
+                    WHERE ticker_code = %s
+                    """,
+                    (ticker_code,),
+                )
+                row = cursor.fetchone()
+
+        return row["latest_trading_date"] if row and row["latest_trading_date"] is not None else None
+
     def list_recent_bars(self, ticker_code: str, limit: int) -> list[DailyBar]:
         with self.database.connect() as connection:
             with connection.cursor() as cursor:

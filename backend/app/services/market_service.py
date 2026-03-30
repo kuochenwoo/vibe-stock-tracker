@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 from app.models.market import MarketHistoryPoint, MarketHistoryResponse, MarketSnapshot, TrackedTicker
 from app.providers.base import MarketDataProvider
 from app.core.cache import RedisMarketCache
+from app.repositories.daily_bar_repository import DailyBarRepository
 from app.services.market_state import MarketStateStore
 from app.services.ticker_service import TickerService
 
@@ -15,12 +16,14 @@ class MarketService:
         state_store: MarketStateStore,
         ticker_service: TickerService,
         cache: RedisMarketCache,
+        daily_bar_repository: DailyBarRepository,
         macro_tickers: list[TrackedTicker] | None = None,
     ) -> None:
         self.provider = provider
         self.state_store = state_store
         self.ticker_service = ticker_service
         self.cache = cache
+        self.daily_bar_repository = daily_bar_repository
         self.macro_tickers = macro_tickers or []
 
     async def refresh_snapshot(self) -> MarketSnapshot:
@@ -94,19 +97,24 @@ class MarketService:
     async def get_snapshot(self) -> MarketSnapshot:
         return await self.state_store.get_snapshot()
 
-    async def get_history(self, code: str) -> MarketHistoryResponse:
+    async def get_history(self, code: str, *, range_value: str = "1d") -> MarketHistoryResponse:
         ticker = self._get_tracked_ticker(code)
-        cached = await self.cache.get_chart_history(ticker.code)
+        range_key = range_value.strip().lower()
+        cached = await self.cache.get_chart_history(f"{ticker.code}:{range_key}")
         if cached and _history_is_fresh(cached):
             return cached
 
-        raw_points = await self.provider.fetch_history(
-            ticker,
-            period="5d",
-            interval="5m",
-        )
-        history = self._normalize_history(ticker, raw_points)
-        await self.cache.set_chart_history(history)
+        if range_key == "1y":
+            history = await self._build_year_history(ticker)
+        else:
+            raw_points = await self.provider.fetch_history(
+                ticker,
+                period="5d",
+                interval="5m",
+            )
+            history = self._normalize_intraday_history(ticker, raw_points)
+
+        await self.cache.set_chart_history(f"{ticker.code}:{range_key}", history)
         return history
 
     def _get_tracked_ticker(self, code: str) -> TrackedTicker:
@@ -116,7 +124,45 @@ class MarketService:
                 return ticker
         raise ValueError(f"Ticker code '{lookup}' was not found.")
 
-    def _normalize_history(
+    async def _build_year_history(self, ticker: TrackedTicker) -> MarketHistoryResponse:
+        stored_bars = list(reversed(self.daily_bar_repository.list_recent_bars(ticker.code, 252)))
+        latest_trading_date = self.daily_bar_repository.get_latest_trading_date(ticker.code)
+
+        if len(stored_bars) < 252 or latest_trading_date is None:
+            fetched_bars = await self.provider.fetch_daily_bars(ticker, period="2y")
+            self.daily_bar_repository.upsert_bars(ticker.code, fetched_bars)
+        elif _daily_bars_need_refresh(latest_trading_date):
+            recent_bars = await self.provider.fetch_daily_bars(ticker, period="1mo")
+            self.daily_bar_repository.upsert_bars(ticker.code, recent_bars)
+
+        bars = list(reversed(self.daily_bar_repository.list_recent_bars(ticker.code, 252)))
+        points = [
+            MarketHistoryPoint(
+                timestamp=datetime.combine(bar.trading_date, time.min, tzinfo=timezone.utc),
+                price=bar.close,
+            )
+            for bar in bars[-252:]
+        ]
+        prices = [point.price for point in points]
+        config = _resolve_session_config(ticker)
+        return MarketHistoryResponse(
+            code=ticker.code,
+            symbol=ticker.symbol,
+            name=ticker.name,
+            range="1y",
+            interval="1d",
+            asset_type=config["asset_type"],
+            session_timezone=config["session_timezone"],
+            session_start=config["session_start"],
+            points=points,
+            high=max(prices) if prices else None,
+            low=min(prices) if prices else None,
+            current=prices[-1] if prices else None,
+            started_at=points[0].timestamp if points else None,
+            ended_at=points[-1].timestamp if points else None,
+        )
+
+    def _normalize_intraday_history(
         self,
         ticker: TrackedTicker,
         points: list[MarketHistoryPoint],
@@ -138,6 +184,8 @@ class MarketService:
             code=ticker.code,
             symbol=ticker.symbol,
             name=ticker.name,
+            range="1d",
+            interval="5m",
             asset_type=config["asset_type"],
             session_timezone=timezone_name,
             session_start=config["session_start"],
@@ -206,7 +254,13 @@ def _latest_session_start(current: datetime, session_start: time) -> datetime:
 def _history_is_fresh(history: MarketHistoryResponse) -> bool:
     if history.ended_at is None:
         return False
+    if history.range == "1y":
+        return history.ended_at.date() >= (datetime.now(timezone.utc).date() - timedelta(days=4))
     return datetime.now(timezone.utc) - history.ended_at <= timedelta(minutes=5)
+
+
+def _daily_bars_need_refresh(latest_trading_date) -> bool:
+    return latest_trading_date < (datetime.now(timezone.utc).date() - timedelta(days=1))
 
 
 def _merge_tickers(primary: list[TrackedTicker], secondary: list[TrackedTicker]) -> list[TrackedTicker]:

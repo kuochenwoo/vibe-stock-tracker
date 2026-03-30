@@ -68,7 +68,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/markets/CL/history",
+              "raw": "{{baseUrl}}/api/markets/CL/history?range=1d",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -77,6 +77,37 @@
                 "markets",
                 "CL",
                 "history"
+              ],
+              "query": [
+                {
+                  "key": "range",
+                  "value": "1d"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Market History 1Y",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/markets/CL/history?range=1y",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "markets",
+                "CL",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "range",
+                  "value": "1y"
+                }
               ]
             }
           }
