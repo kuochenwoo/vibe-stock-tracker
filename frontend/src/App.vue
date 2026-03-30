@@ -3,7 +3,6 @@ import AlertRuleForm from "./components/AlertRuleForm.vue";
 import AlertRuleList from "./components/AlertRuleList.vue";
 import ErrorPanel from "./components/ErrorPanel.vue";
 import MarketCard from "./components/MarketCard.vue";
-import StatusPanel from "./components/StatusPanel.vue";
 import TickerManager from "./components/TickerManager.vue";
 import { useAlerts } from "./composables/useAlerts";
 import { useMarketStream } from "./composables/useMarketStream";
@@ -24,27 +23,36 @@ const {
   removeAlert,
   requestNotificationPermission,
 } = useAlerts(snapshot, trackedTickers);
+
+function formatTime(value) {
+  if (!value) return "--";
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "medium",
+  }).format(new Date(value));
+}
 </script>
 
 <template>
   <div class="page">
-    <header class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">Realtime Dashboard</p>
-        <h1>Track CL futures and GC=F with browser alerts.</h1>
-        <p class="lede">
-          The backend polls market quotes and pushes updates over a websocket.
-          The frontend stores your alarm rules locally and triggers notifications
-          when price crosses your threshold.
-        </p>
+    <header class="page-header">
+      <div class="header-status">
+        <div class="header-item">
+          <span>Connection</span>
+          <strong :class="`status-${connectionState}`">{{ connectionState }}</strong>
+        </div>
+        <div class="header-item">
+          <span>Last Update</span>
+          <strong>{{ formatTime(snapshot.updated_at) }}</strong>
+        </div>
+        <div class="header-item">
+          <span>Notifications</span>
+          <strong>{{ notificationPermission }}</strong>
+        </div>
+        <button class="primary-btn" @click="requestNotificationPermission">
+          Enable browser notifications
+        </button>
       </div>
-
-      <StatusPanel
-        :connection-state="connectionState"
-        :updated-at="snapshot.updated_at"
-        :notification-permission="notificationPermission"
-        @enable-notifications="requestNotificationPermission"
-      />
     </header>
 
     <main class="layout">
@@ -52,22 +60,37 @@ const {
         <MarketCard v-for="card in cards" :key="card.code" :card="card" />
       </section>
 
-      <TickerManager
-        :tickers="trackedTickers"
-        :on-add="createTicker"
-        :on-remove="deleteTicker"
-      />
+      <section class="sidebar">
+        <TickerManager
+          :tickers="trackedTickers"
+          :on-add="createTicker"
+          :on-remove="deleteTicker"
+        />
 
-      <section class="alerts-panel">
-        <div class="panel-head">
-          <div>
-            <p class="label">Alarm Rules</p>
-            <h2>Set notification thresholds</h2>
+        <section class="news-panel">
+          <div class="panel-head">
+            <div>
+              <p class="label">Realtime News</p>
+              <h2>Feed placeholder</h2>
+            </div>
           </div>
-        </div>
+          <p class="news-copy">
+            Reserved for live news modules. We can add Truth Social feeds here
+            later without reshaping the rest of the page.
+          </p>
+        </section>
 
-        <AlertRuleForm :alert-form="alertForm" :tickers="trackedTickers" @submit="addAlert" />
-        <AlertRuleList :alerts="activeAlerts" @remove="removeAlert" />
+        <section class="alerts-panel">
+          <div class="panel-head">
+            <div>
+              <p class="label">Alarm Rules</p>
+              <h2>Set notification thresholds</h2>
+            </div>
+          </div>
+
+          <AlertRuleForm :alert-form="alertForm" :tickers="trackedTickers" @submit="addAlert" />
+          <AlertRuleList :alerts="activeAlerts" @remove="removeAlert" />
+        </section>
       </section>
 
       <ErrorPanel :errors="snapshot.errors ?? []" />

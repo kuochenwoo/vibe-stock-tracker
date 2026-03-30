@@ -1,6 +1,7 @@
 import { computed, reactive, ref, watch } from "vue";
 
 const STORAGE_KEY = "market-alerts.rules.v1";
+const NOTIFICATION_TAG_PREFIX = "market-alert";
 
 export function useAlerts(snapshot, trackedTickers) {
   const notificationPermission = ref(
@@ -73,9 +74,13 @@ export function useAlerts(snapshot, trackedTickers) {
     notificationPermission.value = await Notification.requestPermission();
   }
 
-  function addAlert() {
+  async function addAlert() {
     const value = Number(alertForm.value);
     if (!Number.isFinite(value) || !alertForm.market) return;
+
+    if (notificationPermission.value === "default") {
+      await requestNotificationPermission();
+    }
 
     alertRules.value.unshift({
       id: crypto.randomUUID(),
@@ -124,7 +129,17 @@ export function useAlerts(snapshot, trackedTickers) {
     const body = `Price is ${price.toFixed(2)} and moved ${rule.direction} ${rule.value}.`;
 
     if (notificationPermission.value === "granted") {
-      new Notification(title, { body });
+      new Notification(title, {
+        body,
+        tag: `${NOTIFICATION_TAG_PREFIX}-${rule.id}`,
+        requireInteraction: true,
+        renotify: true,
+      });
+    }
+
+    if (typeof window !== "undefined") {
+      window.focus();
+      window.alert(`${title}\n\n${body}`);
     }
   }
 

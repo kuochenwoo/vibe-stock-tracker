@@ -2,6 +2,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000";
 const WS_BASE = API_BASE.replace(/^http/, "ws");
+const HISTORY_LIMIT = 30;
 
 export function useMarketStream() {
   const snapshot = ref({
@@ -11,6 +12,7 @@ export function useMarketStream() {
     errors: [],
   });
   const connectionState = ref("connecting");
+  const priceHistory = ref({});
 
   let socket;
   let reconnectTimer;
@@ -22,6 +24,7 @@ export function useMarketStream() {
       title: ticker.name,
       subtitle: ticker.symbol,
       data: snapshot.value.markets[ticker.code] ?? null,
+      history: priceHistory.value[ticker.code] ?? [],
     })),
   );
 
@@ -61,7 +64,9 @@ export function useMarketStream() {
     });
 
     socket.addEventListener("message", (event) => {
-      snapshot.value = JSON.parse(event.data);
+      const nextSnapshot = JSON.parse(event.data);
+      snapshot.value = nextSnapshot;
+      updateHistory(nextSnapshot);
     });
 
     socket.addEventListener("close", () => {
@@ -74,6 +79,26 @@ export function useMarketStream() {
       connectionState.value = "error";
       socket.close();
     });
+  }
+
+  function updateHistory(nextSnapshot) {
+    const nextHistory = { ...priceHistory.value };
+
+    for (const ticker of nextSnapshot.tracked_tickers ?? []) {
+      const price = nextSnapshot.markets?.[ticker.code]?.price;
+      if (typeof price !== "number") continue;
+
+      const series = [...(nextHistory[ticker.code] ?? []), price];
+      nextHistory[ticker.code] = series.slice(-HISTORY_LIMIT);
+    }
+
+    for (const code of Object.keys(nextHistory)) {
+      if (!(nextSnapshot.markets && code in nextSnapshot.markets)) {
+        delete nextHistory[code];
+      }
+    }
+
+    priceHistory.value = nextHistory;
   }
 
   onMounted(() => {

@@ -203,3 +203,622 @@ The change delivery skill now presents a consistent workflow across both its ins
 
 ### Reason
 These changes were made to keep the skill definition internally consistent after removing automatic git operations from the workflow.
+
+## 2026-03-30 09:28:52
+
+### Change
+Refined the frontend layout by removing the large hero copy, moving status controls into the page header, and reserving space for a future realtime news feed.
+
+### STAR
+
+#### Situation
+The top of the frontend was using too much space for explanatory copy, the status panel felt cramped inside the old layout, and there was no dedicated area reserved for future news content.
+
+#### Task
+Open up the page layout, move connection and update status into the header, and create a clear placeholder region for future realtime news integration.
+
+#### Action
+- Removed the large intro copy from the top section in [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue).
+- Reworked [StatusPanel.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/StatusPanel.vue) into a compact header strip with inline status chips.
+- Adjusted [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to widen the market area and reduce the cramped layout.
+- Added a dedicated frontend news placeholder panel for future Truth Social feed work.
+
+#### Result
+The page now feels less tight, the connection and notification status lives in the header where it is easier to scan, and there is a ready-made area for future realtime news content.
+
+### Reason
+These changes were made to improve the frontend layout density and prepare a stable location for future live news integration without another structural rewrite.
+
+## 2026-03-30 09:31:50
+
+### Change
+Simplified the frontend header by removing the boxed title panel and replacing the separate status component with a lightweight inline header strip.
+
+### STAR
+
+#### Situation
+The first layout cleanup still left a dedicated title panel and a standalone status component, which was more structure than needed for the top of the page.
+
+#### Task
+Flatten the page header so it uses a simple inline header area and remove the extra “Market Watchboard” panel.
+
+#### Action
+- Removed [StatusPanel.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/StatusPanel.vue).
+- Inlined connection, last update, notification state, and the notification button directly into [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue).
+- Removed the boxed title block from the page header.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to support the flatter header layout.
+
+#### Result
+The top of the page is now simpler and lighter, with just a straightforward header row instead of separate header panels.
+
+### Reason
+These changes were made to reduce unnecessary visual structure and better match the preferred simpler page header layout.
+
+## 2026-03-30 09:35:24
+
+### Change
+Tightened the header and ticker management UI by centering the status row and moving ticker creation into a compact modal flow.
+
+### STAR
+
+#### Situation
+The simplified header still needed better centering, and the ticker operations panel was taking too much vertical space because the full add form was always visible.
+
+#### Task
+Center the header status area, make the ticker section feel more vertically aligned, and reduce the footprint of ticker operations.
+
+#### Action
+- Centered the inline header status row in [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css).
+- Tightened the sidebar alignment so the ticker section reads more cleanly top-to-bottom.
+- Reworked [TickerManager.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/TickerManager.vue) so adding a ticker happens through a compact `+` button and modal instead of a permanently open form.
+- Kept the tracked ticker list visible while reducing the amount of space the operation controls consume.
+
+#### Result
+The header status is centered more cleanly, the ticker panel feels better aligned, and the ticker operation UI now takes much less space while still supporting the same functionality.
+
+### Reason
+These changes were made to reduce layout pressure in the sidebar and keep the page focused on live market content instead of controls.
+
+## 2026-03-30 09:37:02
+
+### Change
+Improved the ticker add modal so opening it moves focus directly into the pop-up and closing it returns focus to the trigger button.
+
+### STAR
+
+#### Situation
+The ticker creation flow was visually using a pop-up overlay, but it still needed clearer modal behavior so keyboard focus moved into the active window instead of staying on the page behind it.
+
+#### Task
+Make the ticker creation overlay behave more like a proper focused pop-up window.
+
+#### Action
+- Updated [TickerManager.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/TickerManager.vue) to focus the first input when the modal opens.
+- Added focus return to the `+` trigger button when the modal closes.
+- Added dialog semantics and escape-key close handling for the pop-up.
+
+#### Result
+Clicking the `+` button now opens a focused pop-up flow where keyboard attention moves into the modal immediately and returns to the trigger when the modal closes.
+
+### Reason
+These changes were made to make the ticker creation pop-up behave more clearly and predictably as a focused modal interaction.
+
+## 2026-03-30 09:39:50
+
+### Change
+Fixed the ticker add pop-up layering so it renders above the full page and visually pushes the rest of the interface behind a blurred backdrop.
+
+### STAR
+
+#### Situation
+The ticker creation pop-up existed, but it was still affected by local layout stacking, so panels like the realtime news section could visually compete with it instead of clearly sitting behind the modal.
+
+#### Task
+Make the ticker creation dialog behave like a true top-level modal that sits above the whole page and visually de-emphasizes the background.
+
+#### Action
+- Updated [TickerManager.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/TickerManager.vue) to render the pop-up with Vue `Teleport` to `body`.
+- Strengthened the overlay in [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) with a much higher z-index and backdrop blur.
+- Kept the existing focus and escape-key behavior in place for the modal.
+
+#### Result
+When the `+` button opens the ticker dialog, the pop-up now sits above the full interface and the rest of the page visibly falls behind a blurred overlay.
+
+### Reason
+These changes were made to fix the modal stacking issue and make the pop-up behave like a proper top-level overlay instead of a sidebar-local panel.
+
+## 2026-03-30 09:41:04
+
+### Change
+Adjusted the tracked ticker entries to stack vertically inside the ticker panel.
+
+### STAR
+
+#### Situation
+The ticker manager was still rendering each tracked ticker as a horizontal row, which did not match the requested vertical presentation.
+
+#### Task
+Reformat the ticker entries so each one reads as a vertically stacked item inside the panel.
+
+#### Action
+- Updated [TickerManager.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/TickerManager.vue) to wrap ticker text in a dedicated vertical content block.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) so each ticker card now uses a column layout with the delete action placed beneath the ticker details.
+
+#### Result
+The tracked ticker panel now presents each ticker vertically instead of as a wide horizontal row.
+
+### Reason
+These changes were made to match the requested vertical layout for ticker entries and make the panel read more cleanly in the sidebar.
+
+## 2026-03-30 09:42:18
+
+### Change
+Changed the main market card area to a vertical stack so tracked instruments render one under another instead of side-by-side.
+
+### STAR
+
+#### Situation
+The previous layout update had only made the tracked ticker management entries vertical. The actual market cards for instruments like `CL=F` and `GC=F` were still rendering next to each other.
+
+#### Task
+Adjust the main market display so each tracked market panel stacks vertically, with `GC=F` appearing below `CL=F`.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) so the `.cards` container uses a single-column grid instead of a two-column layout.
+
+#### Result
+The main market panels now render vertically, so `GC=F` appears underneath `CL=F` rather than to its right.
+
+### Reason
+These changes were made to match the intended vertical arrangement of the main market panels.
+
+## 2026-03-30 09:43:43
+
+### Change
+Added in-panel ticker price lines to the market cards.
+
+### STAR
+
+#### Situation
+The market panels were only showing the latest quote and summary metrics, but there was no visual price trace inside the panel itself.
+
+#### Task
+Draw a live price line for each tracked ticker directly inside its market card.
+
+#### Action
+- Updated [useMarketStream.js](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/composables/useMarketStream.js) to keep a short rolling frontend history for each ticker from websocket updates.
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to render an SVG sparkline inside each panel.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to style the sparkline container and line.
+
+#### Result
+Each market panel now shows a lightweight live price line built from recent streamed updates, giving the user immediate visual direction without leaving the panel.
+
+### Reason
+These changes were made to add an in-panel price visualization for tracked tickers using the current realtime websocket feed.
+
+## 2026-03-30 09:47:03
+
+### Change
+Reshaped the market panel chart toward a Yahoo-style 1D layout by adding a visible reference price level and keeping the statistics below the chart area.
+
+### STAR
+
+#### Situation
+The first price-line version drew a sparkline inside the panel, but it still lacked the clearer 1D reference-level structure you wanted from the Yahoo Finance-style quote panel.
+
+#### Task
+Adjust the in-panel chart so it emphasizes the 1D view, draws a horizontal reference price level, and keeps supporting statistics beneath the chart.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to compute and render a reference line using the previous close.
+- Added a small chart legend for `Reference` and `Last` values directly under the sparkline.
+- Kept the broader stats block below the chart so the panel reads as chart first, metrics second.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to support the new chart framing and reference-line styling.
+
+#### Result
+Each ticker panel now reads more like a compact 1D quote card: the line chart is central, the reference level is visible, and the supporting statistics sit underneath the chart instead of competing with it.
+
+### Reason
+These changes were made to move the market card design closer to a 1D finance quote panel layout with a clear reference price baseline.
+
+## 2026-03-30 09:48:16
+
+### Change
+Simplified the ticker chart line styling to use a more normal thin finance-style stroke.
+
+### STAR
+
+#### Situation
+The first version of the in-panel price line was visually too heavy and decorative, which made the chart feel noisy instead of clean.
+
+#### Task
+Tone the chart styling down so the price line looks more like a standard thin quote-chart line.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to reduce the line stroke width.
+- Switched the line caps and joins away from the rounded decorative look.
+- Simplified the chart frame background and softened the reference-line styling.
+
+#### Result
+The ticker chart now uses a thinner, more conventional line that reads more like a normal finance quote panel.
+
+### Reason
+These changes were made to remove the overly heavy chart styling and make the price line visually cleaner.
+
+## 2026-03-30 09:50:34
+
+### Change
+Made the chart line genuinely thin and added right-side price level markers inside the panel.
+
+### STAR
+
+#### Situation
+The previous chart cleanup still needed two concrete fixes: the line should be thinner still, and the panel needed visible price levels on the right side of the chart area.
+
+#### Task
+Reduce the chart stroke to a true thin line and place aligned price labels for the current and reference levels on the right edge of the panel.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to compute right-side positions for the current price and reference level.
+- Rendered price level markers directly inside the chart frame on the right side.
+- Reduced the chart stroke again in [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) and adjusted the chart padding to make space for the level labels.
+
+#### Result
+The chart now uses a much thinner line, and the market panel shows price levels on the right side aligned to the chart itself.
+
+### Reason
+These changes were made to make the line read like a normal quote line and to add the missing right-side price level markers requested for the panel.
+
+## 2026-03-30 09:52:30
+
+### Change
+Replaced the ticker chart path with a literal point-to-point polyline and reduced the stroke to a true hairline.
+
+### STAR
+
+#### Situation
+The previous chart line was still reading as too styled and too thick for the intended simple quote-line look.
+
+#### Task
+Render the line as a direct connection between sampled points with the thinnest practical stroke.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to use an SVG `polyline` instead of a styled path.
+- Reduced the chart stroke again in [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css).
+- Added non-scaling stroke behavior so the line stays visually thin inside the panel.
+
+#### Result
+The ticker chart now draws as a simple point-to-point line with a much more minimal visual weight.
+
+### Reason
+These changes were made to make the chart behave like a literal thin line rather than a stylized stroke.
+
+## 2026-03-30 09:56:31
+
+### Change
+Replaced the right-side `Last` marker with intraday `High` and `Low` markers on the market chart.
+
+### STAR
+
+#### Situation
+The chart already showed a right-side current-price marker and a previous-close reference line, but the preferred indicator set was to use intraday `High` and `Low` instead of `Current`.
+
+#### Task
+Change the right-side price level indicators so they show intraday high and low positions on the chart.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to compute intraday high and low values from the charted 1D points.
+- Replaced the right-side current-price label with `H` and `L` price markers aligned to the chart levels.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to style the high and low markers distinctly while leaving the previous-close reference muted.
+
+#### Result
+The right edge of each market panel now shows intraday high and low level markers instead of a current-price marker.
+
+### Reason
+These changes were made to use more useful right-side level indicators for the chart while keeping the previous-close reference line in place.
+
+## 2026-03-30 09:58:26
+
+### Change
+Moved the current price label to the left side of the chart and kept intraday high/low labels on the right, all inside the panel.
+
+### STAR
+
+#### Situation
+The chart had right-side `High` and `Low` markers, but the requested label placement was to keep the current price on the left and reserve the right side for intraday `High` and `Low`.
+
+#### Task
+Reposition the chart annotations so `Current` appears on the left side while `High` and `Low` remain on the right, with all labels staying inside the panel.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to render a left-side current price marker.
+- Kept intraday `High` and `Low` markers on the right side of the chart.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to reserve chart padding on both sides and position the labels within the panel bounds.
+
+#### Result
+The chart now shows `Current` on the left, `High/Low` on the right, and all three labels remain inside the panel.
+
+### Reason
+These changes were made to match the requested chart annotation placement and keep the panel more readable.
+
+## 2026-03-30 10:00:18
+
+### Change
+Moved the current-price marker to an inner-right lane and left intraday high/low on an outer-right lane so all three markers sit on the right with spacing between them.
+
+### STAR
+
+#### Situation
+The previous annotation layout put `Current` on the left while `High/Low` sat on the right, but the intended design was to keep all three markers on the right side with `Current` slightly inward from `High/Low`.
+
+#### Task
+Reposition the chart labels so `Current`, `High`, and `Low` all remain on the right edge while preserving spacing between them.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to use separate right-side lanes for the chart labels.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to reserve more right-side padding and define inner-right and outer-right label placement.
+
+#### Result
+The chart now keeps `Current`, `High`, and `Low` on the right side of the panel, with `Current` slightly inward and `High/Low` further right so they have visible separation.
+
+### Reason
+These changes were made to match the intended right-side chart label layout while avoiding label crowding.
+
+## 2026-03-30 10:01:43
+
+### Change
+Cleaned up the chart marker layout by keeping only `Current`, `High`, and `Low` on the right side and clamping them inside the chart frame.
+
+### STAR
+
+#### Situation
+The previous marker layout still had two visible problems: the current marker could visually clash with the plotted line, and the low marker could drift outside the panel near the bottom edge.
+
+#### Task
+Keep the important chart markers on the right side while making sure they remain readable and stay inside the chart frame.
+
+#### Action
+- Removed the extra left-side reference label from [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue).
+- Added marker position clamping so `Current`, `High`, and `Low` stay within the chart bounds.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) so the markers render as compact chips in the reserved right-side area.
+
+#### Result
+The market chart now keeps the right-side markers inside the panel and reduces visual collisions by focusing on `Current`, `High`, and `Low` only.
+
+### Reason
+These changes were made to fix the marker overlap and out-of-bounds issues in the chart annotation area.
+
+## 2026-03-30 10:03:27
+
+### Change
+Added dedicated high/low guide lines and pinned the current marker between them instead of letting it track the live line position.
+
+### STAR
+
+#### Situation
+The chart marker area still felt too jumpy because the current-price label was tied to the live line position, and the high/low markers did not yet have their own visual guide lines.
+
+#### Task
+Make the right-side marker area steadier by drawing lines for `High` and `Low` and placing `Current` between them.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to draw dedicated `High` and `Low` guide lines inside the chart.
+- Changed the `Current` marker position so it sits at the midpoint between `High` and `Low` instead of following the line.
+- Added styling for the new guide lines in [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css).
+
+#### Result
+The chart now shows explicit `High` and `Low` guide lines, and the `Current` label stays positioned between them rather than moving with every line fluctuation.
+
+### Reason
+These changes were made to create a calmer and more readable marker layout on the right side of the chart.
+
+## 2026-03-30 10:05:08
+
+### Change
+Locked the chart marker layout to the frame edges with `H` at the top rim, `L` at the bottom rim, and `C` fixed between them.
+
+### STAR
+
+#### Situation
+The previous marker layout still depended on data-derived y positions, but the requested design was a fixed annotation structure with `H` on the upper rim, `L` on the lower rim, and `C` sitting between them.
+
+#### Task
+Make the marker layout stable by anchoring the key annotations to the chart frame rather than to moving price positions.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) so `H` always uses the top rim position.
+- Updated the same component so `L` always uses the bottom rim position.
+- Kept `C` fixed at the midpoint between those two markers.
+
+#### Result
+The market panel now shows a stable top/middle/bottom marker structure: `H` at the upper rim, `C` in the middle, and `L` at the lower rim.
+
+### Reason
+These changes were made to match the requested fixed marker layout and avoid overlap with the plotted line.
+
+## 2026-03-30 10:10:52
+
+### Change
+Switched the chart marker labels to explicit classic top/middle/bottom anchoring inside the panel.
+
+### STAR
+
+#### Situation
+The previous marker placement still used computed offsets, which left visible spacing from the frame edges and did not fully match the expected classic quote-panel layout.
+
+#### Task
+Anchor `H`, `C`, and `L` directly to fixed top, middle, and bottom positions inside the chart panel.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) so `H` and `L` render at explicit top and bottom positions.
+- Kept `C` centered between them in a fixed middle position.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to use fixed top, bottom, and middle label classes instead of computed vertical offsets.
+
+#### Result
+The chart markers now follow a more classic ticker-panel layout: `H` at the top rim, `C` in the middle, and `L` at the bottom rim.
+
+### Reason
+These changes were made to remove the remaining pixel offset behavior and better match a classic market panel design.
+
+## 2026-03-30 10:13:14
+
+### Change
+Fine-tuned the chart marker spacing by nudging `H` upward and `L` downward while keeping `C` centered between them.
+
+### STAR
+
+#### Situation
+The fixed top/middle/bottom marker layout was close, but the high and low markers still needed a little more separation from the center marker for cleaner spacing.
+
+#### Task
+Add a small visual gap by moving `H` slightly upward and `L` slightly downward while keeping `C` centered between them.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to move the top marker closer to the upper rim and the bottom marker closer to the lower rim.
+
+#### Result
+The marker stack now has a bit more breathing room: `H` sits slightly higher, `L` slightly lower, and `C` remains centered between them.
+
+### Reason
+These changes were made to improve marker separation while keeping the same classic right-side panel structure.
+
+## 2026-03-30 10:14:35
+
+### Change
+Aligned the `C` marker to the same right-side x-position as the `H` and `L` markers.
+
+### STAR
+
+#### Situation
+The chart still used a separate inner-right lane for `C`, while `H` and `L` were positioned on the outer-right lane, so the marker stack did not line up cleanly.
+
+#### Task
+Move `C` onto the same x-axis position as `H` and `L` to create a single aligned marker column on the right side of the panel.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) so the `C` marker uses the same right-side marker class as `H` and `L`.
+- Removed the unused inner-right marker lane style from [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css).
+
+#### Result
+The `H`, `C`, and `L` labels now share the same right-side x-position, creating a cleaner aligned marker stack inside the chart panel.
+
+### Reason
+These changes were made to match the requested marker alignment and simplify the chart annotation layout.
+
+## 2026-03-30 10:15:58
+
+### Change
+Replaced the market panel palette with a darker finance-style color system and cleaner quote-card surfaces.
+
+### STAR
+
+#### Situation
+The existing price panel still looked like a tinted glass dashboard, which did not match the more conventional visual language used in finance products.
+
+#### Task
+Shift the market panel styling to a more standard finance-industry palette with neutral dark surfaces, restrained separators, and familiar market color accents.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to use darker neutral backgrounds and panel surfaces instead of the previous green-tinted palette.
+- Reworked borders, badges, chart backgrounds, and metric tiles to use sharper low-saturation finance-style contrast.
+- Adjusted the marker and chart colors so the line, `H`, `L`, and current labels use more conventional quote-screen styling.
+
+#### Result
+The price panels now read more like a finance terminal or quote board, with darker neutral surfaces and more standard market color accents.
+
+### Reason
+These changes were made to better match the visual conventions users expect from market and trading interfaces.
+
+## 2026-03-30 10:18:45
+
+### Change
+Refined the market price panel toward a more classic quote-card design with stronger chart hierarchy and a filled lower zone.
+
+### STAR
+
+#### Situation
+The updated palette helped, but the price panel still felt visually flat and did not yet resemble a classic finance quote panel with clearer chart emphasis.
+
+#### Task
+Improve the market card so the price line reads more clearly, the panel has better structure, and the space between `C` and `L` is used in a more intentional finance-style way.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to add a subtle area fill under the line and a dedicated current guide line.
+- Extended the `H` and `L` guide lines across the chart to make the panel read more like a standard quote board.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to strengthen the chart frame, increase visual emphasis on the price line, and give the metric tiles a cleaner finance-style treatment.
+
+#### Result
+The price panel now has a clearer chart focal point, more deliberate structure, and a more familiar quote-panel feel with a filled lower zone between the current and lower levels.
+
+### Reason
+These changes were made to move the market card closer to a classic finance interface instead of a generic dashboard card.
+
+## 2026-03-30 10:22:49
+
+### Change
+Strengthened the alert flow so threshold hits raise an actual browser popup notification more reliably.
+
+### STAR
+
+#### Situation
+The frontend already called the browser `Notification` API, but the alert flow used only a minimal notification payload and depended entirely on permission being enabled beforehand.
+
+#### Task
+Make threshold triggers behave more like a browser popup notification workflow so alerts are more visible when a rule is hit.
+
+#### Action
+- Updated [useAlerts.js](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/composables/useAlerts.js) so adding an alert requests browser notification permission when the permission state is still `default`.
+- Changed the same notification path to create notifications with a stable tag and `requireInteraction`, so triggered alerts show as more visible browser popups.
+- Updated the button text in [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) to make it clear that the permission request is for browser notifications.
+
+#### Result
+When an alert threshold is triggered, the frontend now shows a stronger browser notification popup, and permission can be requested during alert creation if it has not been granted yet.
+
+### Reason
+These changes were made to ensure alert triggers behave like browser notifications instead of only changing local page state.
+
+## 2026-03-30 10:25:48
+
+### Change
+Added a direct browser popup dialog when an alert threshold is triggered.
+
+### STAR
+
+#### Situation
+The previous implementation only used the browser `Notification` API, which can still be easy to miss depending on OS notification settings and browser behavior.
+
+#### Task
+Make triggered alerts visibly pop up inside the browser so threshold hits are unmistakable.
+
+#### Action
+- Updated [useAlerts.js](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/composables/useAlerts.js) so a triggered alert now also calls `window.alert(...)` after attempting the standard browser notification.
+- Added `window.focus()` before the popup so the browser window is brought forward when possible.
+
+#### Result
+When an alert fires, the user now gets both the normal browser notification path and a direct popup dialog inside the browser.
+
+### Reason
+These changes were made to ensure alert triggers are visible even when system notifications are suppressed or easy to miss.
+
+## 2026-03-30 10:28:54
+
+### Change
+Shrank the instrument manager into a compact ticker list with a simple right-side remove mark.
+
+### STAR
+
+#### Situation
+The instrument manager still used card-like ticker rows, which took too much vertical space and made the sidebar feel heavier than necessary.
+
+#### Task
+Compress the manage-instruments panel so it shows a simple ticker list with lightweight remove controls instead of standalone item panels.
+
+#### Action
+- Updated [TickerManager.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/TickerManager.vue) to render each tracked instrument as a compact row with ticker text on the left and an `×` remove control on the right.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to replace the card-like ticker item styling with a slimmer list-row treatment and lighter separators.
+
+#### Result
+The manage-instruments section now takes much less space and reads as a simple compact list instead of a second stack of panels.
+
+### Reason
+These changes were made to reduce sidebar weight and make the instrument manager feel more efficient.
