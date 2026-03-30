@@ -31,7 +31,7 @@ function formatPrice(value) {
           Notify when price moves {{ rule.direction }} {{ formatPrice(rule.value) }}
         </p>
       </div>
-      <button class="ghost-btn" @click="emit('remove', rule.id)">Delete</button>
+      <button class="alert-delete" @click="emit('remove', rule.id)">Delete</button>
     </article>
   </div>
   <p v-else class="empty-state">No alerts yet.</p>

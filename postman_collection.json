@@ -13,6 +13,10 @@
     {
       "key": "tickerCode",
       "value": "SI=F"
+    },
+    {
+      "key": "alertId",
+      "value": "00000000-0000-0000-0000-000000000000"
     }
   ],
   "item": [
@@ -155,6 +159,122 @@
                 "api",
                 "tickers",
                 "{{tickerCode}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Preferences",
+      "item": [
+        {
+          "name": "Get Panel Order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preferences/panel-order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preferences",
+                "panel-order"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Panel Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codes\": [\"CL\", \"GC\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/preferences/panel-order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preferences",
+                "panel-order"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "List Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alerts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"market\": \"CL\",\n  \"direction\": \"above\",\n  \"value\": 80.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alerts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Alert",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alerts/{{alertId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alerts",
+                "{{alertId}}"
               ]
             }
           }

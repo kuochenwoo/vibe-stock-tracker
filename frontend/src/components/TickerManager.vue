@@ -56,7 +56,7 @@ async function submit() {
           <p class="ticker-meta">{{ ticker.code }} / {{ ticker.symbol }}</p>
         </div>
         <button class="ticker-remove" @click="props.onRemove(ticker.code)" aria-label="Remove ticker">
-          ×
+          Delete
         </button>
       </article>
     </div>

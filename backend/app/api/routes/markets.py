@@ -1,7 +1,15 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.dependencies import market_service, provider, ticker_service
-from app.models.market import CreateTrackedTickerRequest, MarketSnapshot, TrackedTicker
+from app.api.dependencies import alert_service, market_service, preferences_service, provider, ticker_service
+from app.models.market import (
+    AlertRule,
+    CreateTrackedTickerRequest,
+    CreateAlertRuleRequest,
+    MarketSnapshot,
+    PanelOrderPreference,
+    TrackedTicker,
+    UpdatePanelOrderPreferenceRequest,
+)
 
 router = APIRouter(tags=["markets"])
 
@@ -44,3 +52,36 @@ async def delete_ticker(code: str) -> list[TrackedTicker]:
 
     await market_service.refresh_snapshot()
     return tickers
+
+
+@router.get("/preferences/panel-order", response_model=PanelOrderPreference)
+async def get_panel_order_preference() -> PanelOrderPreference:
+    return preferences_service.get_panel_order()
+
+
+@router.put("/preferences/panel-order", response_model=PanelOrderPreference)
+async def update_panel_order_preference(
+    request: UpdatePanelOrderPreferenceRequest,
+) -> PanelOrderPreference:
+    return preferences_service.save_panel_order(request.codes)
+
+
+@router.get("/alerts", response_model=list[AlertRule])
+async def list_alerts() -> list[AlertRule]:
+    return alert_service.list_alerts()
+
+
+@router.post("/alerts", response_model=list[AlertRule], status_code=status.HTTP_201_CREATED)
+async def add_alert(request: CreateAlertRuleRequest) -> list[AlertRule]:
+    try:
+        return alert_service.add_alert(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.delete("/alerts/{alert_id}", response_model=list[AlertRule])
+async def delete_alert(alert_id: str) -> list[AlertRule]:
+    try:
+        return alert_service.delete_alert(alert_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

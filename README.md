@@ -65,6 +65,11 @@ Endpoints:
 - `GET /api/tickers`
 - `POST /api/tickers`
 - `DELETE /api/tickers/{code}`
+- `GET /api/preferences/panel-order`
+- `PUT /api/preferences/panel-order`
+- `GET /api/alerts`
+- `POST /api/alerts`
+- `DELETE /api/alerts/{alert_id}`
 - `WS /ws/markets`
 
 Provider architecture:
@@ -121,9 +126,10 @@ Fear & Greed gauge:
 
 ## Alert behavior
 
-- Alerts are stored in browser local storage
+- Alerts are stored in Postgres and survive page refreshes
 - Browser notifications must be allowed by the user
 - A rule triggers once when price crosses the threshold, then resets if price moves back across the threshold
+- The frontend still evaluates live trigger state in the browser against the websocket market stream
 
 Key frontend folders:
 

@@ -36,6 +36,32 @@ class CreateTrackedTickerRequest(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class PanelOrderPreference(BaseModel):
+    codes: list[str] = Field(default_factory=list)
+    updated_at: datetime | None = None
+
+
+class UpdatePanelOrderPreferenceRequest(BaseModel):
+    codes: list[str] = Field(default_factory=list)
+
+
+class AlertRule(BaseModel):
+    id: str
+    market: str
+    direction: str
+    value: float
+    enabled: bool = True
+    created_at: datetime | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class CreateAlertRuleRequest(BaseModel):
+    market: str
+    direction: str
+    value: float
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class MarketSnapshot(BaseModel):
     updated_at: datetime | None = None
     tracked_tickers: list[TrackedTicker] = Field(default_factory=list)

@@ -10,6 +10,14 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  hasActiveAlarm: {
+    type: Boolean,
+    default: false,
+  },
+  alertSummary: {
+    type: Object,
+    default: () => ({ count: 0, alerts: [] }),
+  },
 });
 const emit = defineEmits(["open-alarm"]);
 
@@ -69,6 +77,14 @@ function formatDelta(value) {
 function formatPercent(value) {
   if (typeof value !== "number") return "--";
   return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function formatAlarmValue(value) {
+  if (typeof value !== "number") return "--";
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function formatCollapsedPriceParts(value) {
@@ -196,7 +212,22 @@ watch(expanded, () => {
     <div v-if="expanded">
       <div class="card-head">
         <div>
-          <p class="label">{{ card.subtitle }}</p>
+          <div class="card-subtitle-row">
+            <p class="label">{{ card.subtitle }}</p>
+            <span
+              v-if="hasActiveAlarm"
+              class="alarm-indicator alarm-indicator-subtitle"
+              aria-label="Alarm set"
+              title="Alarm set"
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M10 17a2.1 2.1 0 0 0 2-1.5H8A2.1 2.1 0 0 0 10 17Zm5-3.5H5l1.2-1.5V8.6A3.9 3.9 0 0 1 9 4.82V4.5a1 1 0 1 1 2 0v.32a3.9 3.9 0 0 1 2.8 3.78V12l1.2 1.5Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </span>
+          </div>
           <h2>{{ card.title }}</h2>
         </div>
         <div class="card-head-actions">
@@ -216,13 +247,44 @@ watch(expanded, () => {
         </div>
       </div>
 
-      <p class="price">{{ formatPrice(card.data?.price) }}</p>
+      <div class="price-row">
+        <p class="price">{{ formatPrice(card.data?.price) }}</p>
+      </div>
+
+      <button
+        v-if="alertSummary.count"
+        class="alarm-summary"
+        type="button"
+        @click="openAlarmDrawer"
+      >
+        <p class="alarm-summary-copy">
+          <span class="alarm-summary-count">{{ alertSummary.count }} active {{ alertSummary.count === 1 ? "alarm" : "alarms" }}</span>
+          <span class="alarm-summary-separator"> · </span>
+          {{ alertSummary.alerts.slice(0, 2).map((rule) => `${rule.direction} ${formatAlarmValue(rule.value)}`).join(" · ") }}
+          <span v-if="alertSummary.count > 2"> · +{{ alertSummary.count - 2 }} more</span>
+        </p>
+      </button>
     </div>
 
     <div v-else class="card-head card-head-collapsed">
       <div class="card-collapsed-copy">
         <div>
-          <p class="label">{{ card.subtitle }}</p>
+          <div class="card-subtitle-row">
+            <p class="label">{{ card.subtitle }}</p>
+            <span
+              v-if="hasActiveAlarm"
+              class="alarm-indicator alarm-indicator-subtitle"
+              aria-label="Alarm set"
+              title="Alarm set"
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M10 17a2.1 2.1 0 0 0 2-1.5H8A2.1 2.1 0 0 0 10 17Zm5-3.5H5l1.2-1.5V8.6A3.9 3.9 0 0 1 9 4.82V4.5a1 1 0 1 1 2 0v.32a3.9 3.9 0 0 1 2.8 3.78V12l1.2 1.5Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </span>
+          </div>
           <h2>{{ card.title }}</h2>
         </div>
       </div>

@@ -1,22 +1,18 @@
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
-const STORAGE_KEY = "market-alerts.rules.v1";
+const DEFAULT_API_BASE =
+  typeof window === "undefined"
+    ? "http://127.0.0.1:8000"
+    : `${window.location.protocol}//${window.location.hostname}:8000`;
+const API_BASE = import.meta.env.VITE_API_BASE ?? DEFAULT_API_BASE;
 const NOTIFICATION_TAG_PREFIX = "market-alert";
 const POPUP_DURATION_MS = 7000;
-
-function createRuleId() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-
-  return `rule-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
 
 export function useAlerts(snapshot, trackedTickers) {
   const notificationPermission = ref(
     typeof Notification === "undefined" ? "unsupported" : Notification.permission,
   );
-  const alertRules = ref(loadRules());
+  const alertRules = ref([]);
   const triggeredKeys = ref(new Set());
   const popupNotice = ref(null);
 
@@ -46,14 +42,6 @@ export function useAlerts(snapshot, trackedTickers) {
   );
 
   watch(
-    alertRules,
-    (rules) => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
-    },
-    { deep: true },
-  );
-
-  watch(
     snapshot,
     (value) => {
       evaluateAlerts(value.markets);
@@ -61,36 +49,63 @@ export function useAlerts(snapshot, trackedTickers) {
     { deep: true },
   );
 
-  function loadRules() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  }
+  onMounted(() => {
+    loadAlerts();
+  });
 
   async function requestNotificationPermission() {
     if (typeof Notification === "undefined") return;
     notificationPermission.value = await Notification.requestPermission();
   }
 
+  async function loadAlerts() {
+    try {
+      const response = await fetch(`${API_BASE}/api/alerts`);
+      if (!response.ok) {
+        throw new Error("Failed to load alerts.");
+      }
+
+      alertRules.value = await response.json();
+    } catch {
+      alertRules.value = [];
+    }
+  }
+
   async function addAlert(payload) {
     const value = Number(payload?.value);
     if (!Number.isFinite(value) || !payload?.market) return;
 
-    alertRules.value.unshift({
-      id: createRuleId(),
-      market: payload.market,
-      direction: payload.direction,
-      value,
-      triggered: false,
-      created_at: new Date().toISOString(),
+    const response = await fetch(`${API_BASE}/api/alerts`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        market: payload.market,
+        direction: payload.direction,
+        value,
+      }),
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail ?? "Failed to add alert.");
+    }
+
+    alertRules.value = await response.json();
   }
 
-  function removeAlert(id) {
-    alertRules.value = alertRules.value.filter((rule) => rule.id !== id);
+  async function removeAlert(id) {
+    const response = await fetch(`${API_BASE}/api/alerts/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail ?? "Failed to remove alert.");
+    }
+
+    alertRules.value = await response.json();
     triggeredKeys.value.delete(id);
   }
 

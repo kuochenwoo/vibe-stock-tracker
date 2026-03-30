@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps({
   snapshot: {
@@ -26,12 +26,14 @@ const segments = [
 
 const score = computed(() => props.snapshot?.value ?? null);
 const rating = computed(() => props.snapshot?.rating ?? "--");
+const collapsed = ref(false);
 const currentSegment = computed(() => {
   if (typeof score.value !== "number") return null;
   return (
     segments.find((segment) => score.value >= segment.start && score.value <= segment.end) ?? null
   );
 });
+const compactColor = computed(() => currentSegment.value?.color ?? "var(--muted)");
 
 const needleTransform = computed(() => {
   const value = typeof score.value === "number" ? score.value : 50;
@@ -94,15 +96,37 @@ function formatUpdatedAt(value) {
     <div class="panel-head">
       <div>
         <p class="label">Market Sentiment</p>
-        <h2>Fear &amp; Greed</h2>
+        <div class="fear-greed-title-row">
+          <h2>
+            <span class="fear-greed-source-wrap">
+              <a
+                class="fear-greed-title-link"
+                :href="snapshot?.source_url ?? 'https://edition.cnn.com/markets/fear-and-greed'"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Fear &amp; Greed
+              </a>
+              <span class="fear-greed-source-tooltip">Source: CNN</span>
+            </span>
+          </h2>
+          <strong
+            v-if="collapsed"
+            class="fear-greed-inline-value"
+            :style="{ color: compactColor }"
+          >
+            {{ score ?? "--" }}
+          </strong>
+        </div>
       </div>
-      <a class="gauge-source" :href="snapshot?.source_url ?? 'https://edition.cnn.com/markets/fear-and-greed'" target="_blank" rel="noreferrer">
-        CNN
-      </a>
+      <button class="collapse-toggle" type="button" :aria-label="collapsed ? 'Expand fear and greed panel' : 'Collapse fear and greed panel'" @click="collapsed = !collapsed">
+        {{ collapsed ? "▾" : "−" }}
+      </button>
     </div>
 
     <div v-if="error" class="fear-greed-state">{{ error }}</div>
     <div v-else-if="loading && !snapshot" class="fear-greed-state">Loading fear &amp; greed index...</div>
+    <div v-else-if="collapsed" class="fear-greed-collapsed"></div>
     <div v-else class="fear-greed-body">
       <div class="gauge-score-head">
         <strong>{{ score ?? "--" }}</strong>

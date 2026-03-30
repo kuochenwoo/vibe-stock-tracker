@@ -42,6 +42,27 @@ CREATE INDEX IF NOT EXISTS idx_ticker_aliases_alias
 CREATE INDEX IF NOT EXISTS idx_ticker_aliases_ticker_id
     ON ticker_aliases (ticker_id);
 
+CREATE TABLE IF NOT EXISTS app_preferences (
+    preference_key TEXT PRIMARY KEY,
+    value JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS alert_rules (
+    id UUID PRIMARY KEY,
+    ticker_code CITEXT NOT NULL REFERENCES tracked_tickers(code) ON DELETE CASCADE,
+    direction VARCHAR(16) NOT NULL,
+    threshold NUMERIC(18, 6) NOT NULL,
+    is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT alert_rules_direction_check CHECK (direction IN ('above', 'below'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_alert_rules_ticker_code
+    ON alert_rules (ticker_code);
+
 INSERT INTO tracked_tickers (
     code,
     provider,

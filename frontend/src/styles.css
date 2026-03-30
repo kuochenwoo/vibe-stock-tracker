@@ -49,6 +49,34 @@ select {
   z-index: 20;
 }
 
+.localtime-indicator {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.localtime-icon {
+  font-size: 1.28rem;
+  line-height: 1;
+}
+
+.localtime-daytime {
+  color: #f4b400;
+}
+
+.localtime-nighttime {
+  color: #607dcb;
+}
+
+.localtime-dawn,
+.localtime-dusk {
+  color: #ef6c00;
+}
+
 .settings-trigger {
   min-width: 118px;
   border: 1px solid rgba(88, 98, 116, 0.16);
@@ -72,11 +100,11 @@ select {
   display: none;
   margin-top: 8px;
   min-width: 160px;
-  padding: 8px;
-  border: 1px solid rgba(112, 96, 68, 0.16);
-  border-radius: 18px;
-  background: rgba(249, 246, 238, 0.98);
-  box-shadow: var(--shadow-1);
+  padding: 4px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .settings-nav:hover .settings-menu,
@@ -90,7 +118,10 @@ select {
   border: 0;
   border-radius: 12px;
   padding: 10px 12px;
-  background: transparent;
+  background: rgba(249, 246, 238, 0.98);
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: 0 8px 18px rgba(82, 68, 44, 0.08);
   color: #705f43;
   font-weight: 600;
   text-align: left;
@@ -98,7 +129,8 @@ select {
 }
 
 .settings-menu-item:hover {
-  background: rgba(205, 186, 150, 0.18);
+  background: rgba(238, 230, 213, 0.98);
+  color: #4f5a6d;
 }
 
 .page-header {
@@ -182,6 +214,20 @@ h2 {
   transform: translateY(-2px);
   box-shadow: 0 22px 42px rgba(45, 62, 92, 0.14);
   border-color: rgba(21, 101, 192, 0.18);
+  user-select: none;
+}
+
+.market-card-ghost {
+  opacity: 0.45;
+  border-color: rgba(21, 101, 192, 0.28);
+}
+
+.market-card-chosen {
+  box-shadow: 0 24px 48px rgba(45, 62, 92, 0.18);
+}
+
+.market-card-dragging {
+  transform: rotate(1deg);
 }
 
 .fear-greed-card {
@@ -274,6 +320,12 @@ h2 {
   min-width: 0;
 }
 
+.card-subtitle-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .badge {
   align-self: start;
   padding: 8px 12px;
@@ -307,11 +359,15 @@ h2 {
   line-height: 1;
 }
 
+.price-row {
+  display: block;
+}
+
 .price-inline {
   grid-column: 2;
   margin-top: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 4ch;
+  grid-template-columns: minmax(0, 1fr) 4ch auto;
   align-items: center;
   align-self: center;
   width: 196px;
@@ -330,6 +386,65 @@ h2 {
 
 .price-inline-decimal {
   text-align: left;
+}
+
+.alarm-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: #a76600;
+  border: 1px solid rgba(255, 179, 0, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 179, 0, 0.08);
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.alarm-indicator svg {
+  width: 11px;
+  height: 11px;
+}
+
+.alarm-indicator-subtitle {
+  margin-top: -8px;
+}
+
+.alarm-summary {
+  width: 100%;
+  border: 0;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 179, 0, 0.08);
+  border: 1px solid rgba(255, 179, 0, 0.18);
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.alarm-summary-count {
+  color: #8b5e00;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.alarm-summary-copy {
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.alarm-summary:hover {
+  background: rgba(255, 179, 0, 0.12);
+}
+
+.alarm-summary-separator {
+  color: rgba(139, 94, 0, 0.5);
 }
 
 .price-up {
@@ -416,10 +531,86 @@ h2 {
   margin-top: 18px;
 }
 
+.fear-greed-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.fear-greed-source-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.fear-greed-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.fear-greed-title-link:hover {
+  color: var(--accent);
+}
+
+.fear-greed-source-tooltip {
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  z-index: 14;
+  padding: 7px 10px;
+  border: 1px solid rgba(91, 107, 134, 0.16);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 253, 0.98) 0%, rgba(238, 243, 249, 0.98) 100%);
+  color: var(--text);
+  font-size: 0.74rem;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: var(--shadow-1);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%) translateX(-4px);
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+}
+
+.fear-greed-source-wrap:hover .fear-greed-source-tooltip,
+.fear-greed-source-wrap:focus-within .fear-greed-source-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
 .fear-greed-state {
   margin-top: 18px;
   color: var(--muted);
   line-height: 1.6;
+}
+
+.fear-greed-inline-value {
+  font-size: 1.18rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-left: auto;
+}
+
+.fear-greed-collapsed {
+  min-height: 0;
+}
+
+.collapse-toggle {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(21, 101, 192, 0.15);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  box-shadow: 0 6px 16px rgba(21, 101, 192, 0.08);
 }
 
 .gauge-wrap {
@@ -852,20 +1043,18 @@ h2 {
 
 .ticker-remove {
   flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
   border: 0;
   padding: 0;
-  border-radius: 999px;
-  color: var(--muted);
+  color: var(--danger);
   background: transparent;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.84rem;
+  font-weight: 700;
   line-height: 1;
 }
 
 .ticker-remove:hover {
-  color: var(--danger);
+  color: #a52323;
 }
 
 .ticker-row:last-child {
@@ -921,9 +1110,9 @@ h2 {
 
 .settings-modal-close {
   position: absolute;
-  top: 18px;
-  right: 18px;
-  z-index: 2;
+  top: -16px;
+  right: -16px;
+  z-index: 3;
 }
 
 .settings-modal-copy {
@@ -937,6 +1126,20 @@ h2 {
   background: transparent;
   padding: 0;
   margin-top: 0;
+}
+
+.alert-delete {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--danger);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.alert-delete:hover {
+  color: #a52323;
 }
 
 .alarm-drawer {
