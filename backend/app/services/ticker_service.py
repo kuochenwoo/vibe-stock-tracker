@@ -14,6 +14,9 @@ class TickerService:
             code=request.code.strip().upper(),
             symbol=request.symbol.strip().upper(),
             name=request.name.strip(),
+            provider=request.provider.strip().lower(),
+            aliases=[alias.strip() for alias in request.aliases if alias.strip()],
+            metadata=request.metadata,
         )
         return self.repository.add(ticker)
 

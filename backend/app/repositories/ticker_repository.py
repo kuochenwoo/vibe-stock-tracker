@@ -1,42 +1,120 @@
-import json
-from pathlib import Path
+from psycopg.types.json import Jsonb
 
+from app.core.database import PostgresDatabase
 from app.models.market import TrackedTicker
 
 
 class TickerRepository:
-    def __init__(self, file_path: Path) -> None:
-        self.file_path = file_path
-        self.file_path.parent.mkdir(parents=True, exist_ok=True)
-        if not self.file_path.exists():
-            self._write(
-                [
-                    TrackedTicker(code="CL", symbol="CL=F", name="Crude Oil Futures"),
-                    TrackedTicker(code="GC=F", symbol="GC=F", name="Gold Futures"),
-                ]
-            )
+    def __init__(self, database: PostgresDatabase) -> None:
+        self.database = database
+        self.database.initialize()
 
     def list_all(self) -> list[TrackedTicker]:
-        payload = json.loads(self.file_path.read_text(encoding="utf-8"))
-        return [TrackedTicker(**item) for item in payload]
+        query = """
+            SELECT
+                t.code,
+                t.provider_symbol AS symbol,
+                t.display_name AS name,
+                t.provider,
+                t.metadata,
+                COALESCE(
+                    ARRAY_AGG(a.alias ORDER BY a.alias) FILTER (WHERE a.alias IS NOT NULL),
+                    ARRAY[]::citext[]
+                ) AS aliases
+            FROM tracked_tickers t
+            LEFT JOIN ticker_aliases a
+                ON a.ticker_id = t.id
+            WHERE t.is_active = TRUE
+            GROUP BY t.id
+            ORDER BY t.code
+        """
+        with self.database.connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                rows = cursor.fetchall()
+
+        return [
+            TrackedTicker(
+                code=row["code"],
+                symbol=row["symbol"],
+                name=row["name"],
+                provider=row["provider"],
+                aliases=list(row["aliases"] or []),
+                metadata=row["metadata"] or {},
+            )
+            for row in rows
+        ]
 
     def add(self, ticker: TrackedTicker) -> list[TrackedTicker]:
-        tickers = self.list_all()
-        normalized = ticker.code.upper()
-        if any(existing.code.upper() == normalized for existing in tickers):
-            raise ValueError(f"Ticker code '{ticker.code}' already exists.")
-        tickers.append(ticker)
-        self._write(tickers)
-        return tickers
+        with self.database.connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT 1
+                    FROM tracked_tickers
+                    WHERE code = %s
+                    """,
+                    (ticker.code,),
+                )
+                if cursor.fetchone():
+                    raise ValueError(f"Ticker code '{ticker.code}' already exists.")
+
+                cursor.execute(
+                    """
+                    INSERT INTO tracked_tickers (
+                        code,
+                        provider,
+                        provider_symbol,
+                        display_name,
+                        metadata
+                    )
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        ticker.code,
+                        ticker.provider,
+                        ticker.symbol,
+                        ticker.name,
+                        Jsonb(ticker.metadata),
+                    ),
+                )
+                ticker_id = cursor.fetchone()["id"]
+
+                for alias in _normalized_aliases(ticker):
+                    cursor.execute(
+                        """
+                        INSERT INTO ticker_aliases (ticker_id, alias, alias_type, source)
+                        VALUES (%s, %s, %s, %s)
+                        ON CONFLICT (ticker_id, alias, alias_type) DO NOTHING
+                        """,
+                        (ticker_id, alias, "general", "api"),
+                    )
+
+            connection.commit()
+
+        return self.list_all()
 
     def delete(self, code: str) -> list[TrackedTicker]:
-        tickers = self.list_all()
-        filtered = [ticker for ticker in tickers if ticker.code.upper() != code.upper()]
-        if len(filtered) == len(tickers):
-            raise ValueError(f"Ticker code '{code}' was not found.")
-        self._write(filtered)
-        return filtered
+        with self.database.connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    DELETE FROM tracked_tickers
+                    WHERE code = %s
+                    RETURNING id
+                    """,
+                    (code,),
+                )
+                deleted = cursor.fetchone()
+                if deleted is None:
+                    raise ValueError(f"Ticker code '{code}' was not found.")
+            connection.commit()
 
-    def _write(self, tickers: list[TrackedTicker]) -> None:
-        payload = [ticker.model_dump(mode="json") for ticker in tickers]
-        self.file_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        return self.list_all()
+
+
+def _normalized_aliases(ticker: TrackedTicker) -> list[str]:
+    aliases = {ticker.symbol}
+    aliases.update(alias.strip() for alias in ticker.aliases if alias.strip())
+    return sorted(aliases)

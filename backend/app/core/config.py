@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     )
     market_poll_interval_seconds: int = 5
     market_data_provider: str = "yfinance"
+    postgres_dsn: str = "postgresql://market_alerts:market_alerts@localhost:5432/market_alerts"
+    postgres_schema_path: Path = Path("../infra/postgres/init/001_market_schema.sql")
+    redis_url: str = "redis://localhost:6379/0"
 
 
 @lru_cache

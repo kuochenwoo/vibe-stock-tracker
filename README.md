@@ -31,12 +31,15 @@ Environment variables:
 
 - `MARKET_DATA_PROVIDER=yfinance`
 - `MARKET_POLL_INTERVAL_SECONDS=5`
+- `POSTGRES_DSN=postgresql://market_alerts:market_alerts@localhost:5432/market_alerts`
+- `POSTGRES_SCHEMA_PATH=../infra/postgres/init/001_market_schema.sql`
+- `REDIS_URL=redis://localhost:6379/0`
 
-Database direction:
+Database layout:
 
-- Postgres is intended to become the source of truth for tracked tickers, aliases, and metadata.
-- Redis is intended to hold runtime market state such as the previous completed 5-minute close.
-- Initial infrastructure artifacts now exist at:
+- Postgres is now the backend source of truth for tracked tickers, aliases, and metadata.
+- Redis now stores runtime market cache values, including the latest quote snapshot and the previous completed 5-minute close.
+- Supporting artifacts:
   - [docker-compose.yml](/Users/guozhen_wu/Documents/vibe-code-test/docker-compose.yml)
   - [001_market_schema.sql](/Users/guozhen_wu/Documents/vibe-code-test/infra/postgres/init/001_market_schema.sql)
   - [redis-key-design.md](/Users/guozhen_wu/Documents/vibe-code-test/docs/redis-key-design.md)
@@ -72,14 +75,17 @@ Provider architecture:
 
 Ticker management:
 
-- Tracked instruments are stored in [tracked_tickers.json](/Users/guozhen_wu/Documents/vibe-code-test/backend/data/tracked_tickers.json)
-- The backend seeds `CL=F` and `GC=F` as the initial tracked tickers
+- Tracked instruments are stored in Postgres table `tracked_tickers`
+- Aliases are stored in Postgres table `ticker_aliases`
+- The schema seeds `CL` -> `CL=F` and `GC` -> `GC=F` as the initial tracked tickers
 - New tickers can be added from the frontend or by calling the ticker endpoints directly
 
 Current provider note:
 
 - The `yfinance` provider fetches whatever symbols exist in the tracked ticker registry
 - The default gold instrument now uses `GC=F`
+- The backend writes latest quotes to Redis key `market:last:{code}`
+- The backend writes the previous completed 5-minute close to Redis key `market:ref:5m:prev_close:{code}`
 
 Key backend folders:
 

@@ -44,6 +44,13 @@ class YFinanceMarketDataProvider(MarketDataProvider):
             raise ValueError(f"No market data returned for {ticker.symbol}")
 
         latest_row = history.dropna(subset=["Close"]).iloc[-1]
+        history_5m = instrument.history(
+            period="5d",
+            interval="5m",
+            auto_adjust=False,
+            prepost=True,
+        )
+        prev_5m_close, prev_5m_closed_at = self._resolve_previous_5m_close(history_5m)
         previous_close = self._resolve_previous_close(history)
         price = float(latest_row["Close"])
         change = price - previous_close if previous_close is not None else None
@@ -69,6 +76,8 @@ class YFinanceMarketDataProvider(MarketDataProvider):
                 .astimezone(timezone.utc)
                 .isoformat(),
                 "requested_symbol": ticker.symbol,
+                "prev_5m_close": prev_5m_close,
+                "prev_5m_bar_closed_at": prev_5m_closed_at,
             },
         )
 
@@ -80,3 +89,12 @@ class YFinanceMarketDataProvider(MarketDataProvider):
         if len(closes) == 1:
             return float(closes.iloc[0])
         return float(closes.iloc[-2])
+
+    @staticmethod
+    def _resolve_previous_5m_close(history) -> tuple[float | None, str | None]:
+        closes = history["Close"].dropna()
+        if closes.empty:
+            return None, None
+        close_row = closes.iloc[-2] if len(closes) > 1 else closes.iloc[-1]
+        close_time = closes.index[-2] if len(closes) > 1 else closes.index[-1]
+        return float(close_row), close_time.to_pydatetime().astimezone(timezone.utc).isoformat()

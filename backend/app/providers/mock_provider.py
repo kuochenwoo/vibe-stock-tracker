@@ -24,6 +24,11 @@ class MockMarketDataProvider(MarketDataProvider):
                 previous_close=base_close,
                 market_state="SIMULATED",
                 source=self.provider_name,
+                metadata={
+                    "last_bar_time": datetime.now(timezone.utc).isoformat(),
+                    "prev_5m_close": round(base_price - 0.12, 2),
+                    "prev_5m_bar_closed_at": datetime.now(timezone.utc).isoformat(),
+                },
             )
 
         return MarketSnapshot(

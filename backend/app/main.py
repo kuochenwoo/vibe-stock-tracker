@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.dependencies import market_poller
+from app.api.dependencies import market_cache, market_poller
 from app.api.routes.health import router as health_router
 from app.api.routes.market_stream import router as market_stream_router
 from app.api.routes.markets import router as markets_router
@@ -20,6 +20,7 @@ async def lifespan(_: FastAPI):
         yield
     finally:
         await market_poller.stop()
+        await market_cache.close()
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)

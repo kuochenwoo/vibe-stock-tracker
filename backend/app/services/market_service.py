@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from app.models.market import MarketSnapshot
 from app.providers.base import MarketDataProvider
+from app.core.cache import RedisMarketCache
 from app.services.market_state import MarketStateStore
 from app.services.ticker_service import TickerService
 
@@ -12,10 +13,12 @@ class MarketService:
         provider: MarketDataProvider,
         state_store: MarketStateStore,
         ticker_service: TickerService,
+        cache: RedisMarketCache,
     ) -> None:
         self.provider = provider
         self.state_store = state_store
         self.ticker_service = ticker_service
+        self.cache = cache
 
     async def refresh_snapshot(self) -> MarketSnapshot:
         tickers = self.ticker_service.list_tickers()
@@ -31,6 +34,9 @@ class MarketService:
             )
 
         await self.state_store.set_snapshot(snapshot)
+        for quote in snapshot.markets.values():
+            await self.cache.set_latest_quote(quote)
+            await self.cache.set_prev_5m_close(quote)
         await self.state_store.broadcast(snapshot)
         return snapshot
 

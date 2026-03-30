@@ -22,12 +22,18 @@ class TrackedTicker(BaseModel):
     code: str
     symbol: str
     name: str
+    provider: str = "yfinance"
+    aliases: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class CreateTrackedTickerRequest(BaseModel):
     code: str
     symbol: str
     name: str
+    provider: str = "yfinance"
+    aliases: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class MarketSnapshot(BaseModel):

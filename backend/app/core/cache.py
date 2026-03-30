@@ -1,0 +1,58 @@
+import json
+from datetime import datetime
+from typing import Any
+
+from redis.asyncio import Redis
+
+from app.core.config import Settings
+from app.models.market import MarketQuote
+
+
+class RedisMarketCache:
+    def __init__(self, settings: Settings) -> None:
+        self.client = Redis.from_url(settings.redis_url, decode_responses=True)
+
+    async def close(self) -> None:
+        await self.client.aclose()
+
+    async def set_latest_quote(self, quote: MarketQuote) -> None:
+        payload = {
+            "code": quote.code,
+            "provider": quote.source,
+            "provider_symbol": quote.symbol,
+            "price": quote.price,
+            "previous_close": quote.previous_close,
+            "change": quote.change,
+            "change_percent": quote.change_percent,
+            "market_state": quote.market_state,
+            "timestamp": _metadata_value(quote.metadata, "last_bar_time"),
+        }
+        await self.client.set(_latest_quote_key(quote.code), json.dumps(payload))
+
+    async def set_prev_5m_close(self, quote: MarketQuote) -> None:
+        price = _metadata_value(quote.metadata, "prev_5m_close")
+        if price is None:
+            return
+
+        payload = {
+            "code": quote.code,
+            "price": price,
+            "bar_closed_at": _metadata_value(quote.metadata, "prev_5m_bar_closed_at"),
+            "source_timestamp": _metadata_value(quote.metadata, "last_bar_time"),
+        }
+        await self.client.set(_prev_5m_key(quote.code), json.dumps(payload))
+
+
+def _latest_quote_key(code: str) -> str:
+    return f"market:last:{code}"
+
+
+def _prev_5m_key(code: str) -> str:
+    return f"market:ref:5m:prev_close:{code}"
+
+
+def _metadata_value(metadata: dict[str, Any], key: str) -> Any:
+    value = metadata.get(key)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
