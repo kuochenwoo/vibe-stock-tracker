@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import draggable from "vuedraggable";
 import AlertsManager from "./components/AlertsManager.vue";
 import ErrorPanel from "./components/ErrorPanel.vue";
@@ -42,6 +42,7 @@ const localClock = ref(new Date());
 const layoutVersion = ref(0);
 const fearGreedCollapsed = ref(false);
 const showTopRightClock = ref(true);
+const removingTickerCodes = ref([]);
 
 let localClockTimer;
 
@@ -234,10 +235,30 @@ function handleCloseAlarmDrawer() {
   layoutVersion.value += 1;
 }
 
+async function handleDeleteTicker(code) {
+  const previousCards = [...displayCards.value];
+  removingTickerCodes.value = [...new Set([...removingTickerCodes.value, code])];
+  if (alarmDrawerTicker.value?.code === code) {
+    handleCloseAlarmDrawer();
+  }
+  try {
+    await nextTick();
+    displayCards.value = displayCards.value.filter((card) => card.code !== code);
+    await deleteTicker(code);
+  } catch (error) {
+    displayCards.value = previousCards;
+    removingTickerCodes.value = removingTickerCodes.value.filter((item) => item !== code);
+    throw error;
+  }
+  removingTickerCodes.value = removingTickerCodes.value.filter((item) => item !== code);
+}
+
 watch(
   cards,
   (nextCards) => {
-    displayCards.value = nextCards.map((card) => ({ ...card }));
+    displayCards.value = nextCards
+      .filter((card) => !removingTickerCodes.value.includes(card.code))
+      .map((card) => ({ ...card }));
   },
   { immediate: true },
 );
@@ -316,7 +337,8 @@ onBeforeUnmount(() => {
             <template #item="{ element }">
               <MarketCard
                 :card="element"
-                :on-delete="deleteTicker"
+                :on-delete="handleDeleteTicker"
+                :is-deleting="removingTickerCodes.includes(element.code)"
                 :has-active-alarm="marketsWithAlerts.has(element.code)"
                 :alert-summary="alertSummaryByMarket.get(element.code) ?? { count: 0, alerts: [] }"
                 :layout-version="layoutVersion"

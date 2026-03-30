@@ -244,6 +244,12 @@ h2 {
   z-index: 18;
 }
 
+.market-card-removing {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0;
+}
+
 .market-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 22px 42px rgba(45, 62, 92, 0.14);

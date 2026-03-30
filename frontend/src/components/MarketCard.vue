@@ -16,6 +16,10 @@ const props = defineProps({
     type: Function,
     default: null,
   },
+  isDeleting: {
+    type: Boolean,
+    default: false,
+  },
   hasActiveAlarm: {
     type: Boolean,
     default: false,
@@ -421,7 +425,7 @@ watch(
 </script>
 
 <template>
-  <article :class="['market-card', { 'market-card-menu-open': actionMenuOpen }]">
+  <article :class="['market-card', { 'market-card-menu-open': actionMenuOpen, 'market-card-removing': isDeleting }]">
     <div v-if="expanded">
       <div class="card-head">
         <div>

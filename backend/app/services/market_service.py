@@ -24,24 +24,37 @@ class MarketService:
         self.macro_tickers = macro_tickers or []
 
     async def refresh_snapshot(self) -> MarketSnapshot:
-        tickers = self.ticker_service.list_tickers()
-        requested_tickers = _merge_tickers(tickers, self.macro_tickers)
+        requested_tickers = _merge_tickers(self.ticker_service.list_tickers(), self.macro_tickers)
         try:
             provider_snapshot = await self.provider.fetch_snapshot(requested_tickers)
+            current_tickers = self.ticker_service.list_tickers()
+            allowed_codes = {ticker.code for ticker in current_tickers}
+            allowed_codes.update(ticker.code for ticker in self.macro_tickers)
             snapshot = MarketSnapshot(
                 updated_at=provider_snapshot.updated_at,
-                tracked_tickers=tickers,
+                tracked_tickers=current_tickers,
                 macro_tickers=self.macro_tickers,
-                markets=provider_snapshot.markets,
+                markets={
+                    code: quote
+                    for code, quote in provider_snapshot.markets.items()
+                    if code in allowed_codes
+                },
                 errors=provider_snapshot.errors,
             )
         except Exception as exc:  # noqa: BLE001
             previous = await self.state_store.get_snapshot()
+            current_tickers = self.ticker_service.list_tickers()
+            allowed_codes = {ticker.code for ticker in current_tickers}
+            allowed_codes.update(ticker.code for ticker in self.macro_tickers)
             snapshot = MarketSnapshot(
                 updated_at=datetime.now(timezone.utc),
-                tracked_tickers=tickers,
+                tracked_tickers=current_tickers,
                 macro_tickers=self.macro_tickers,
-                markets=previous.markets,
+                markets={
+                    code: quote
+                    for code, quote in previous.markets.items()
+                    if code in allowed_codes
+                },
                 errors=[f"{type(exc).__name__}: {exc}"],
             )
 
