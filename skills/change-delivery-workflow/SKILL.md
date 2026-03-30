@@ -1,6 +1,6 @@
 ---
 name: change-delivery-workflow
-description: Handle post-change delivery hygiene for this project. Use when code, APIs, docs, or project files were modified and Codex must keep the changelog index and daily changelog files plus postman_collection.json in sync, while batching minor tweaks into larger changelog entries when appropriate and leaving final verification and git operations to the user.
+description: Handle post-change delivery hygiene for this project. Use when code, APIs, docs, or project files were modified and Codex must keep the changelog index and daily changelog files plus postman_collection.json in sync, while batching minor tweaks into larger changelog entries when appropriate, keeping the todo list updated for idea-only discussions, and leaving final verification and git operations to the user.
 ---
 
 # Change Delivery Workflow
@@ -55,17 +55,31 @@ Apply this workflow after substantive changes in this repository. Treat it as th
 - Add or update request bodies, path params, and request names so the collection matches the backend routes.
 - If no endpoint changed, leave the collection untouched.
 
+### Update `TODO-LIST.md`
+
+- When either the user or Codex proposes a new idea, enhancement, future feature, or architecture direction without implementing it in the current turn, add it to `TODO-LIST.md`.
+- Treat idea capture as required project hygiene, not an optional note.
+- Record each idea with an explicit status:
+  - `Not Yet Implemented`
+  - `Implemented`
+- Use `Not Yet Implemented` for roadmap items, design ideas, deferred work, and future integrations that were discussed but not built yet.
+- Change an item's status to `Implemented` when the work is actually completed in the repository.
+- Update existing todo items instead of duplicating them when the same idea comes up again.
+- Keep wording concise and implementation-oriented so the todo list stays useful as a working roadmap.
+- If an idea is superseded or narrowed, revise the existing item rather than appending a conflicting duplicate.
+
 ## Handoff
 
 - Stop after code and project artifacts are updated.
 - Leave final verification to the user unless they explicitly ask for it.
 - Leave `git add`, `git commit`, and `git push` to the user unless they explicitly ask for git operations.
-- If relevant, briefly note whether `CHANGELOG.md` or `postman_collection.json` was updated as part of the change.
+- If relevant, briefly note whether the changelog, `postman_collection.json`, or `TODO-LIST.md` was updated as part of the change.
 
 ## Repo-Specific Notes
 
 - The changelog index lives at the repository root: `CHANGELOG.md`.
 - Daily changelog files live under `changelogs/YYYY-MM/YYYY-MM-DD.md`.
 - The Postman collection lives at the repository root: `postman_collection.json`.
+- The roadmap file lives at the repository root: `TODO-LIST.md`.
 - This workflow applies even for documentation-only or API-only changes when those artifacts are affected.
 - Prefer fewer, higher-signal changelog entries over a long stream of tiny low-signal entries.
