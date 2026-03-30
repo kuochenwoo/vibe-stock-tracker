@@ -822,3 +822,324 @@ The manage-instruments section now takes much less space and reads as a simple c
 
 ### Reason
 These changes were made to reduce sidebar weight and make the instrument manager feel more efficient.
+
+## 2026-03-30 10:35:46
+
+### Change
+Removed the top notification button and converted the header status fields to single-line label/value rows.
+
+### STAR
+
+#### Situation
+The page header still included a dedicated browser notification button, and each status field used a stacked layout that made the header taller than necessary.
+
+#### Task
+Simplify the header by removing the extra button and aligning `Connection`, `Last Update`, and `Notifications` as compact single-line fields.
+
+#### Action
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) to remove the top `Enable browser notifications` button.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) so header status items render as inline label/value pairs on a single row.
+
+#### Result
+The top of the page is now cleaner and more compact, with each status field reading on one line instead of as stacked blocks.
+
+### Reason
+These changes were made to reduce header clutter and better match the compact quote-screen layout.
+
+## 2026-03-30 10:37:32
+
+### Change
+Enabled LAN access for both the backend and frontend instead of keeping the app tied to localhost-only defaults.
+
+### STAR
+
+#### Situation
+The project still assumed `127.0.0.1` in its frontend API base, CORS settings, and startup instructions, which prevented easy access from other machines on the same local network.
+
+#### Task
+Make the app reachable across the LAN while keeping the default frontend-to-backend connection simple.
+
+#### Action
+- Updated [frontend/vite.config.js](/Users/guozhen_wu/Documents/vibe-code-test/frontend/vite.config.js) so the Vite dev and preview servers bind to `0.0.0.0`.
+- Updated [useMarketStream.js](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/composables/useMarketStream.js) so the frontend defaults to `http://<current-browser-host>:8000` instead of hardcoding `127.0.0.1`.
+- Updated [config.py](/Users/guozhen_wu/Documents/vibe-code-test/backend/app/core/config.py) and [main.py](/Users/guozhen_wu/Documents/vibe-code-test/backend/app/main.py) to allow frontend origins from typical private-network LAN addresses.
+- Updated [README.md](/Users/guozhen_wu/Documents/vibe-code-test/README.md) with LAN startup commands and access notes.
+
+#### Result
+The frontend and backend can now be started on all local interfaces, and other machines on the same LAN can open the app using the host machine’s LAN IP address.
+
+### Reason
+These changes were made to turn the app into a LAN-accessible development setup instead of a localhost-only one.
+
+## 2026-03-30 10:42:46
+
+### Change
+Added a dedicated market-themed favicon and registered it in the frontend entry page.
+
+### STAR
+
+#### Situation
+The app still used the browser default icon, which made the project feel unfinished and harder to distinguish in tabs or bookmarks.
+
+#### Task
+Add a proper favicon that fits the market-monitoring theme and is served from `/favicon.ico`.
+
+#### Action
+- Created [favicon.ico](/Users/guozhen_wu/Documents/vibe-code-test/frontend/public/favicon.ico) with a finance-themed icon showing a quote-panel style sparkline motif.
+- Updated [index.html](/Users/guozhen_wu/Documents/vibe-code-test/frontend/index.html) to explicitly register the favicon at `/favicon.ico`.
+
+#### Result
+The app now shows a dedicated icon in the browser tab and uses a more polished project identity.
+
+### Reason
+These changes were made to improve the app’s presentation and make it easier to recognize among open browser tabs.
+
+## 2026-03-30 10:44:48
+
+### Change
+Fixed alert creation for LAN HTTP access by removing the dependency on `crypto.randomUUID()` and decoupling alert creation from notification permission prompts.
+
+### STAR
+
+#### Situation
+The app was being opened from a LAN IP over plain HTTP instead of localhost, which can disable secure-context browser APIs such as `crypto.randomUUID()` and interfere with the alert creation flow.
+
+#### Task
+Make alert creation work reliably on LAN HTTP access even when secure-context browser APIs are unavailable.
+
+#### Action
+- Updated [useAlerts.js](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/composables/useAlerts.js) to generate alert IDs with a safe fallback when `crypto.randomUUID()` is not available.
+- Removed the notification permission request from the alert creation path so adding an alert does not depend on browser notification permission behavior.
+
+#### Result
+Alert rules can now be added from a LAN-served HTTP page even when the browser does not expose `crypto.randomUUID()` for that origin.
+
+### Reason
+These changes were made to ensure the alert feature works consistently when the app is accessed from other machines on the same local network.
+
+## 2026-03-30 10:45:58
+
+### Change
+Removed the `Notifications` status field from the page header.
+
+### STAR
+
+#### Situation
+The header still showed a `Notifications` status value, even though it no longer added much value to the main quote-screen layout.
+
+#### Task
+Simplify the header by removing the notification status and leaving only the core connection and update fields.
+
+#### Action
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) to remove the `Notifications` header item.
+- Removed the now-unused `notificationPermission` destructuring from the same component.
+
+#### Result
+The header is now cleaner and focuses only on `Connection` and `Last Update`.
+
+### Reason
+These changes were made to reduce header noise and keep the top bar focused on market connectivity state.
+
+## 2026-03-30 10:47:10
+
+### Change
+Replaced the raw alert popup with a styled Material-like notification card and refreshed the page shell, cards, and controls to use a more cohesive Material-inspired design language.
+
+### STAR
+
+#### Situation
+The alert trigger still relied on a native `window.alert(...)` popup, and the page styling felt pieced together rather than intentionally designed as a unified interface.
+
+#### Task
+Improve the alert experience and overall page presentation with a cleaner Material-style visual system and a custom in-app notification surface.
+
+#### Action
+- Added [NotificationPopup.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/NotificationPopup.vue) to render a styled floating alert card instead of relying on the browser alert dialog.
+- Updated [useAlerts.js](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/composables/useAlerts.js) to publish popup notification state, auto-dismiss it after a short interval, and keep optional system notification support when permission is granted.
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) to mount the new notification surface and add a more intentional top-of-page title treatment.
+- Reworked [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to use lighter Material-inspired surfaces, elevation, chips, buttons, text fields, and card styling across the page.
+
+#### Result
+Triggered alerts now appear as a polished floating in-app notification, and the overall application has a more coherent Material-style dashboard appearance.
+
+### Reason
+These changes were made to replace the rough browser alert experience and give the whole UI a cleaner, more professional frontend design.
+
+## 2026-03-30 10:50:16
+
+### Change
+Removed the chip-style panel treatment from the header status items so connection metadata appears as plain header text.
+
+### STAR
+
+#### Situation
+The Material-style pass turned `Connection` and `Last Update` into chip-like status panels, which conflicted with the requirement to keep them as simple header text only.
+
+#### Task
+Strip the extra panel styling from the header status row while keeping the information in the page header.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to remove the chip padding, border, and background styling from `.header-item`.
+
+#### Result
+`Connection` and `Last Update` now render as simple inline header text instead of small status panels.
+
+### Reason
+These changes were made to keep the top metadata lightweight and aligned with the requested header-only treatment.
+
+## 2026-03-30 10:51:18
+
+### Change
+Removed the remaining panel/card treatment from the entire page header.
+
+### STAR
+
+#### Situation
+Even after removing the chip styling from the status items, the full header container still had card-like padding, border, background, and shadow styling, so it still read as a panel.
+
+#### Task
+Make the top of the page a plain header section instead of a styled container.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to remove the header padding, border, radius, background gradient, and shadow from `.page-header`.
+
+#### Result
+The top area now renders as a plain header layout with text only, rather than as a card or panel.
+
+### Reason
+These changes were made to match the requested plain-header treatment exactly.
+
+## 2026-03-30 10:51:49
+
+### Change
+Removed the `Realtime futures monitor` title block from the page header.
+
+### STAR
+
+#### Situation
+The page header still included the extra title block, which added more structure than requested for the top area.
+
+#### Task
+Reduce the header to only the essential status metadata without the additional title text.
+
+#### Action
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) to remove the `Material Market Board` eyebrow and `Realtime futures monitor` heading from the header.
+
+#### Result
+The top of the page now shows only the connection and update metadata without a title block.
+
+### Reason
+These changes were made to keep the header minimal and aligned with the requested simpler layout.
+
+## 2026-03-30 10:52:17
+
+### Change
+Centered the header metadata row.
+
+### STAR
+
+#### Situation
+The top metadata was still aligned toward one side, which made the header feel visually off-balance after removing the title block.
+
+#### Task
+Align the remaining header content to the middle of the page.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to center the page header layout and the header status row.
+
+#### Result
+`Connection` and `Last Update` now sit centered in the header.
+
+### Reason
+These changes were made to match the requested centered header layout.
+
+## 2026-03-30 10:52:47
+
+### Change
+Removed the `Manage instruments` title from the ticker section.
+
+### STAR
+
+#### Situation
+The ticker manager still carried the extra `Manage instruments` title, which added more visual weight than needed for the compact list treatment.
+
+#### Task
+Simplify the ticker section header by removing the title while keeping the tracked-tickers label and add control.
+
+#### Action
+- Updated [TickerManager.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/TickerManager.vue) to remove the `Manage instruments` heading.
+
+#### Result
+The ticker section header is now lighter and more compact.
+
+### Reason
+These changes were made to keep the instrument manager visually minimal.
+
+## 2026-03-30 10:53:56
+
+### Change
+Moved the ticker add button to the upper-right corner and removed the extra gap between the tracked-tickers label and the list.
+
+### STAR
+
+#### Situation
+The ticker section still left unnecessary space between the `Tracked Tickers` label and the ticker list, and the `+` button did not feel anchored tightly to the panel corner.
+
+#### Task
+Tighten the ticker section header so the add button sits in the upper-right corner and the list begins immediately below the label.
+
+#### Action
+- Updated [TickerManager.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/TickerManager.vue) to give the ticker header its own layout hook.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) so the `+` button is positioned in the upper-right corner and the ticker list no longer keeps extra top margin.
+
+#### Result
+The ticker section now feels tighter: the add button is corner-aligned and the list starts directly under the section label.
+
+### Reason
+These changes were made to reduce wasted space and make the instrument manager more compact.
+
+## 2026-03-30 10:55:10
+
+### Change
+Moved the ticker `+` button into an overlapping corner position above the ticker panel.
+
+### STAR
+
+#### Situation
+The ticker add button was still visually inside the panel layout, while the requested design was for it to overlap the panel from above.
+
+#### Task
+Position the add button so it sits above the ticker panel edge in an overlapping upper-right corner treatment.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to make the ticker panel a positioning context and place the `+` button in an absolute overlapping corner position above the panel.
+- Adjusted the ticker panel top spacing so the overlap looks intentional instead of cramped.
+
+#### Result
+The `+` button now sits above and overlaps the ticker panel at the upper-right corner.
+
+### Reason
+These changes were made to match the requested floating corner-button layout more closely.
+
+## 2026-03-30 10:56:06
+
+### Change
+Snapped the ticker `+` button to the exact upper-right corner and made its surface fully opaque.
+
+### STAR
+
+#### Situation
+The overlapping `+` button was close to the requested placement, but it was still inset from the corner and its semi-transparent styling let the panel show through underneath.
+
+#### Task
+Place the floating add button exactly at the panel corner and make it visually solid.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) so the ticker `+` button sits at the exact upper-right corner offset of the panel.
+- Changed the same button styling to use a fully opaque white background instead of a translucent fill.
+
+#### Result
+The ticker add button now sits directly on the upper-right corner and reads as a solid floating control without panel color bleeding through.
+
+### Reason
+These changes were made to match the requested corner placement and solid-button appearance more precisely.

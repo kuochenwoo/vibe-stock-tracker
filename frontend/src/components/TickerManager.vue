@@ -69,10 +69,9 @@ watch(isComposerOpen, async (open) => {
 
 <template>
   <section class="ticker-manager">
-    <div class="panel-head">
+    <div class="panel-head ticker-head">
       <div>
         <p class="label">Tracked Tickers</p>
-        <h2>Manage instruments</h2>
       </div>
       <button ref="triggerButton" class="icon-btn" @click="openComposer">+</button>
     </div>

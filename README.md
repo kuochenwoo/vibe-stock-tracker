@@ -17,10 +17,10 @@ cd /Users/guozhen_wu/Documents/vibe-code-test/backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The backend starts on `http://127.0.0.1:8000`.
+The backend starts on `http://0.0.0.0:8000` and is reachable from other machines on the same LAN at `http://<your-machine-lan-ip>:8000`.
 
 API client template:
 
@@ -75,13 +75,15 @@ npm install
 npm run dev
 ```
 
-The frontend starts on `http://127.0.0.1:5173`.
+The frontend starts on `http://0.0.0.0:5173` and is reachable from other machines on the same LAN at `http://<your-machine-lan-ip>:5173`.
 
 If your API runs somewhere else, start the frontend with:
 
 ```bash
-VITE_API_BASE=http://127.0.0.1:8000 npm run dev
+VITE_API_BASE=http://<your-api-host>:8000 npm run dev
 ```
+
+By default, the frontend now calls `http://<current-browser-host>:8000`, so when you open the UI from another machine on your LAN it will target the backend on that same host automatically.
 
 ## Alert behavior
 

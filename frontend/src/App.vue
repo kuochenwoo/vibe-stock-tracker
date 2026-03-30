@@ -3,6 +3,7 @@ import AlertRuleForm from "./components/AlertRuleForm.vue";
 import AlertRuleList from "./components/AlertRuleList.vue";
 import ErrorPanel from "./components/ErrorPanel.vue";
 import MarketCard from "./components/MarketCard.vue";
+import NotificationPopup from "./components/NotificationPopup.vue";
 import TickerManager from "./components/TickerManager.vue";
 import { useAlerts } from "./composables/useAlerts";
 import { useMarketStream } from "./composables/useMarketStream";
@@ -18,10 +19,10 @@ const {
 const {
   activeAlerts,
   alertForm,
-  notificationPermission,
   addAlert,
+  dismissPopup,
+  popupNotice,
   removeAlert,
-  requestNotificationPermission,
 } = useAlerts(snapshot, trackedTickers);
 
 function formatTime(value) {
@@ -45,13 +46,6 @@ function formatTime(value) {
           <span>Last Update</span>
           <strong>{{ formatTime(snapshot.updated_at) }}</strong>
         </div>
-        <div class="header-item">
-          <span>Notifications</span>
-          <strong>{{ notificationPermission }}</strong>
-        </div>
-        <button class="primary-btn" @click="requestNotificationPermission">
-          Enable browser notifications
-        </button>
       </div>
     </header>
 
@@ -95,5 +89,7 @@ function formatTime(value) {
 
       <ErrorPanel :errors="snapshot.errors ?? []" />
     </main>
+
+    <NotificationPopup :notice="popupNotice" @dismiss="dismissPopup" />
   </div>
 </template>

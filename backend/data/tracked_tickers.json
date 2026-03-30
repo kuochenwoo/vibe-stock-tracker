@@ -8,5 +8,10 @@
     "code": "GC=F",
     "symbol": "GC=F",
     "name": "Gold Futures"
+  },
+  {
+    "code": "BTC-USD",
+    "symbol": "BTC-USD",
+    "name": "BTC"
   }
 ]
