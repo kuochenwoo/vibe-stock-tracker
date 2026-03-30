@@ -13,6 +13,8 @@ class MockMarketDataProvider(MarketDataProvider):
             base_price = 68.42 if ticker.code == "CL" else 3087.14
             base_change = 0.57 if ticker.code == "CL" else -4.18
             base_close = 67.85 if ticker.code == "CL" else 3091.32
+            prev_5m_close = round(base_price - 0.12, 2)
+            five_min_change = round(base_price - prev_5m_close, 2)
             markets[ticker.code] = MarketQuote(
                 code=ticker.code,
                 symbol=ticker.symbol,
@@ -21,12 +23,14 @@ class MockMarketDataProvider(MarketDataProvider):
                 currency="USD",
                 change=base_change,
                 change_percent=(base_change / base_close) * 100,
+                five_min_change=five_min_change,
+                five_min_change_percent=(five_min_change / prev_5m_close) * 100,
                 previous_close=base_close,
                 market_state="SIMULATED",
                 source=self.provider_name,
                 metadata={
                     "last_bar_time": datetime.now(timezone.utc).isoformat(),
-                    "prev_5m_close": round(base_price - 0.12, 2),
+                    "prev_5m_close": prev_5m_close,
                     "prev_5m_bar_closed_at": datetime.now(timezone.utc).isoformat(),
                 },
             )

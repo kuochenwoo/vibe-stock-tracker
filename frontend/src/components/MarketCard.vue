@@ -517,11 +517,11 @@ watch(
       <div class="metrics">
         <div>
           <span>5m Change</span>
-          <strong>{{ formatDelta(card.data?.change) }}</strong>
+          <strong>{{ formatDelta(card.data?.five_min_change) }}</strong>
         </div>
         <div>
           <span>5m Change %</span>
-          <strong>{{ formatPercent(card.data?.change_percent) }}</strong>
+          <strong>{{ formatPercent(card.data?.five_min_change_percent) }}</strong>
         </div>
         <div>
           <span>State</span>

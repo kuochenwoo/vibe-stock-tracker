@@ -86,6 +86,12 @@ class YFinanceMarketDataProvider(MarketDataProvider):
             if change is not None and previous_close not in (None, 0)
             else None
         )
+        five_min_change = price - prev_5m_close if prev_5m_close is not None else None
+        five_min_change_percent = (
+            ((five_min_change / prev_5m_close) * 100)
+            if five_min_change is not None and prev_5m_close not in (None, 0)
+            else None
+        )
 
         return MarketQuote(
             code=ticker.code,
@@ -95,6 +101,8 @@ class YFinanceMarketDataProvider(MarketDataProvider):
             currency="USD",
             change=change,
             change_percent=change_percent,
+            five_min_change=five_min_change,
+            five_min_change_percent=five_min_change_percent,
             previous_close=previous_close,
             market_state="LIVE",
             source=self.provider_name,

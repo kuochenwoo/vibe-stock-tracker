@@ -12,6 +12,8 @@ class MarketQuote(BaseModel):
     currency: str = "USD"
     change: float | None = None
     change_percent: float | None = None
+    five_min_change: float | None = None
+    five_min_change_percent: float | None = None
     previous_close: float | None = None
     market_state: str = "UNKNOWN"
     source: str

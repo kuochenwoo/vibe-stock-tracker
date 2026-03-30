@@ -24,6 +24,8 @@ class RedisMarketCache:
             "previous_close": quote.previous_close,
             "change": quote.change,
             "change_percent": quote.change_percent,
+            "five_min_change": quote.five_min_change,
+            "five_min_change_percent": quote.five_min_change_percent,
             "market_state": quote.market_state,
             "timestamp": _metadata_value(quote.metadata, "last_bar_time"),
         }
