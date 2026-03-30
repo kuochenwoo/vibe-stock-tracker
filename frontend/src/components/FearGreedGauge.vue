@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 
 const props = defineProps({
   snapshot: {
@@ -14,7 +14,12 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  collapsed: {
+    type: Boolean,
+    default: false,
+  },
 });
+const emit = defineEmits(["update:collapsed"]);
 
 const segments = [
   { label: "Extreme Fear", start: 0, end: 25, color: "#d14343" },
@@ -26,7 +31,6 @@ const segments = [
 
 const score = computed(() => props.snapshot?.value ?? null);
 const rating = computed(() => props.snapshot?.rating ?? "--");
-const collapsed = ref(false);
 const currentSegment = computed(() => {
   if (typeof score.value !== "number") return null;
   return (
@@ -34,6 +38,7 @@ const currentSegment = computed(() => {
   );
 });
 const compactColor = computed(() => currentSegment.value?.color ?? "var(--muted)");
+const collapsed = computed(() => props.collapsed);
 
 const needleTransform = computed(() => {
   const value = typeof score.value === "number" ? score.value : 50;
@@ -89,6 +94,10 @@ function formatUpdatedAt(value) {
     timeStyle: "short",
   }).format(new Date(value));
 }
+
+function toggleCollapsed() {
+  emit("update:collapsed", !props.collapsed);
+}
 </script>
 
 <template>
@@ -119,7 +128,7 @@ function formatUpdatedAt(value) {
           </strong>
         </div>
       </div>
-      <button class="collapse-toggle" type="button" :aria-label="collapsed ? 'Expand fear and greed panel' : 'Collapse fear and greed panel'" @click="collapsed = !collapsed">
+      <button class="collapse-toggle" type="button" :aria-label="collapsed ? 'Expand fear and greed panel' : 'Collapse fear and greed panel'" @click="toggleCollapsed">
         {{ collapsed ? "▾" : "−" }}
       </button>
     </div>

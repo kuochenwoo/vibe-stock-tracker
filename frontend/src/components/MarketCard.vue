@@ -20,8 +20,12 @@ const props = defineProps({
     type: Object,
     default: () => ({ count: 0, alerts: [] }),
   },
+  layoutVersion: {
+    type: Number,
+    default: 0,
+  },
 });
-const emit = defineEmits(["open-alarm"]);
+const emit = defineEmits(["open-alarm", "expanded-change"]);
 
 const expanded = ref(false);
 const actionMenuOpen = ref(false);
@@ -36,11 +40,20 @@ function toggleExpanded() {
   expanded.value = !expanded.value;
   if (!expanded.value) {
     actionMenuOpen.value = false;
+    disposeChart();
   }
+  emit("expanded-change", {
+    code: props.card.code,
+    expanded: expanded.value,
+  });
 }
 
 function openAlarmDrawer() {
   expanded.value = true;
+  emit("expanded-change", {
+    code: props.card.code,
+    expanded: true,
+  });
   emit("open-alarm", {
     code: props.card.code,
     name: props.card.title,
@@ -164,7 +177,9 @@ function formatHoverTime(value) {
 }
 
 function initChart() {
-  if (!chartCanvasRef.value || chartInstance) return;
+  if (!chartCanvasRef.value) return;
+  if (chartInstance?.getDom?.() === chartCanvasRef.value) return;
+  disposeChart();
 
   chartInstance = echarts.init(chartCanvasRef.value, null, {
     renderer: "canvas",
@@ -177,6 +192,13 @@ function initChart() {
     });
     resizeObserver.observe(chartCanvasRef.value);
   }
+}
+
+function disposeChart() {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+  chartInstance?.dispose();
+  chartInstance = null;
 }
 
 function updateChart() {
@@ -320,10 +342,11 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleOutsideClick);
   nextTick(syncCollapsedControlsWidth);
-  resizeObserver?.disconnect();
-  resizeObserver = null;
-  chartInstance?.dispose();
-  chartInstance = null;
+  disposeChart();
+  emit("expanded-change", {
+    code: props.card.code,
+    expanded: false,
+  });
 });
 
 onUpdated(() => {
@@ -338,8 +361,21 @@ watch(expanded, () => {
       chartInstance?.resize();
       updateChart();
     });
+  } else {
+    disposeChart();
   }
 });
+
+watch(
+  () => props.layoutVersion,
+  () => {
+    if (!expanded.value) return;
+    nextTick(() => {
+      chartInstance?.resize();
+      updateChart();
+    });
+  },
+);
 
 watch(
   [chartPlotPoints, () => props.card.data?.previous_close, () => props.card.data?.price],

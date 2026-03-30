@@ -38,6 +38,8 @@ const showAlarmSettings = ref(false);
 const alarmDrawerTicker = ref(null);
 const displayCards = ref([]);
 const localClock = ref(new Date());
+const layoutVersion = ref(0);
+const fearGreedCollapsed = ref(false);
 
 let localClockTimer;
 
@@ -87,6 +89,11 @@ function formatTime(value) {
 
 function handleDragEnd() {
   setTickerOrder(displayCards.value.map((card) => card.code));
+}
+
+function handleCloseAlarmDrawer() {
+  alarmDrawerTicker.value = null;
+  layoutVersion.value += 1;
 }
 
 watch(
@@ -161,20 +168,22 @@ onBeforeUnmount(() => {
                 :card="element"
                 :has-active-alarm="marketsWithAlerts.has(element.code)"
                 :alert-summary="alertSummaryByMarket.get(element.code) ?? { count: 0, alerts: [] }"
+                :layout-version="layoutVersion"
                 @open-alarm="alarmDrawerTicker = $event"
               />
             </template>
           </draggable>
 
-          <section class="sidebar">
+          <section v-if="!alarmDrawerTicker" class="sidebar">
             <FearGreedGauge
-              v-if="!alarmDrawerTicker"
               :snapshot="fearGreedSnapshot"
               :loading="fearGreedLoading"
               :error="fearGreedError"
+              :collapsed="fearGreedCollapsed"
+              @update:collapsed="fearGreedCollapsed = $event"
             />
 
-            <section v-if="!alarmDrawerTicker" class="news-panel">
+            <section class="news-panel">
               <div class="panel-head">
                 <div>
                   <p class="label">Realtime News</p>
@@ -202,7 +211,7 @@ onBeforeUnmount(() => {
           v-if="alarmDrawerTicker"
           :ticker="alarmDrawerTicker"
           :alerts="drawerAlerts"
-          @close="alarmDrawerTicker = null"
+          @close="handleCloseAlarmDrawer"
           @add-alert="addAlert"
           @remove-alert="removeAlert"
         />
