@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -67,6 +67,28 @@ class CreateAlertRuleRequest(BaseModel):
 class MarketHistoryPoint(BaseModel):
     timestamp: datetime
     price: float
+
+
+class DailyBar(BaseModel):
+    trading_date: date
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float | None = None
+    source: str
+
+
+class MovingAverageSnapshot(BaseModel):
+    code: str
+    symbol: str
+    name: str
+    as_of_date: date | None = None
+    last_close: float | None = None
+    sma_20: float | None = None
+    sma_30: float | None = None
+    sma_60: float | None = None
+    bars_loaded: int = 0
 
 
 class MarketHistoryResponse(BaseModel):

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import yfinance as yf
 
 from app.core.config import Settings
-from app.models.market import MarketHistoryPoint, MarketQuote, MarketSnapshot, TrackedTicker
+from app.models.market import DailyBar, MarketHistoryPoint, MarketQuote, MarketSnapshot, TrackedTicker
 from app.providers.base import MarketDataProvider
 
 
@@ -44,6 +44,18 @@ class YFinanceMarketDataProvider(MarketDataProvider):
             ticker,
             period,
             interval,
+        )
+
+    async def fetch_daily_bars(
+        self,
+        ticker: TrackedTicker,
+        *,
+        period: str,
+    ) -> list[DailyBar]:
+        return await asyncio.to_thread(
+            self._fetch_daily_bars,
+            ticker,
+            period,
         )
 
     def _fetch_quote(self, ticker: TrackedTicker) -> MarketQuote:
@@ -143,6 +155,38 @@ class YFinanceMarketDataProvider(MarketDataProvider):
             )
 
         return points
+
+    def _fetch_daily_bars(
+        self,
+        ticker: TrackedTicker,
+        period: str,
+    ) -> list[DailyBar]:
+        instrument = yf.Ticker(ticker.symbol)
+        history = instrument.history(
+            period=period,
+            interval="1d",
+            auto_adjust=False,
+            prepost=False,
+        )
+        rows = history.dropna(subset=["Open", "High", "Low", "Close"])
+        if rows.empty:
+            raise ValueError(f"No daily bars returned for {ticker.symbol}")
+
+        bars: list[DailyBar] = []
+        for timestamp, row in rows.iterrows():
+            bars.append(
+                DailyBar(
+                    trading_date=timestamp.date(),
+                    open=float(row["Open"]),
+                    high=float(row["High"]),
+                    low=float(row["Low"]),
+                    close=float(row["Close"]),
+                    volume=float(row["Volume"]) if "Volume" in row and row["Volume"] == row["Volume"] else None,
+                    source=self.provider_name,
+                )
+            )
+
+        return bars
 
     @staticmethod
     def _resolve_previous_close(history, latest_row) -> float | None:

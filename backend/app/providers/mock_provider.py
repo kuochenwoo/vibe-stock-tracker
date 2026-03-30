@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from app.models.market import MarketHistoryPoint, MarketQuote, MarketSnapshot, TrackedTicker
+from app.models.market import DailyBar, MarketHistoryPoint, MarketQuote, MarketSnapshot, TrackedTicker
 from app.providers.base import MarketDataProvider
 
 
@@ -64,3 +64,30 @@ class MockMarketDataProvider(MarketDataProvider):
             )
 
         return points
+
+    async def fetch_daily_bars(
+        self,
+        ticker: TrackedTicker,
+        *,
+        period: str,
+    ) -> list[DailyBar]:
+        today = datetime.now(timezone.utc).date()
+        base_price = 68.42 if ticker.code == "CL" else 3087.14
+        bars: list[DailyBar] = []
+
+        for index in range(180):
+            trading_date = today - timedelta(days=179 - index)
+            close = round(base_price + ((index % 14) - 7) * 0.24, 2)
+            bars.append(
+                DailyBar(
+                    trading_date=trading_date,
+                    open=round(close - 0.31, 2),
+                    high=round(close + 0.55, 2),
+                    low=round(close - 0.62, 2),
+                    close=close,
+                    volume=100000 + index * 250,
+                    source=self.provider_name,
+                )
+            )
+
+        return bars

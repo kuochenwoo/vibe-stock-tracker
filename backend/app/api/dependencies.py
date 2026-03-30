@@ -4,6 +4,7 @@ from app.core.database import PostgresDatabase
 from app.models.market import TrackedTicker
 from app.providers.factory import MarketDataProviderFactory
 from app.repositories.alert_repository import AlertRepository
+from app.repositories.daily_bar_repository import DailyBarRepository
 from app.repositories.preferences_repository import PreferencesRepository
 from app.repositories.ticker_repository import TickerRepository
 from app.services.alert_service import AlertService
@@ -11,6 +12,7 @@ from app.services.fear_greed_service import FearGreedService
 from app.services.market_poller import MarketPoller
 from app.services.market_service import MarketService
 from app.services.market_state import MarketStateStore
+from app.services.moving_average_service import MovingAverageService
 from app.services.preferences_service import PreferencesService
 from app.services.ticker_service import TickerService
 
@@ -22,6 +24,7 @@ market_cache = RedisMarketCache(settings)
 ticker_repository = TickerRepository(database)
 alert_repository = AlertRepository(database)
 preferences_repository = PreferencesRepository(database)
+daily_bar_repository = DailyBarRepository(database)
 ticker_service = TickerService(repository=ticker_repository)
 alert_service = AlertService(
     repository=alert_repository,
@@ -32,6 +35,11 @@ preferences_service = PreferencesService(
     ticker_repository=ticker_repository,
 )
 fear_greed_service = FearGreedService()
+moving_average_service = MovingAverageService(
+    provider=provider,
+    ticker_repository=ticker_repository,
+    daily_bar_repository=daily_bar_repository,
+)
 macro_tickers = [
     {
         "code": "VIX",

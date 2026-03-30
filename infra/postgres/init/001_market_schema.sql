@@ -63,6 +63,24 @@ CREATE TABLE IF NOT EXISTS alert_rules (
 CREATE INDEX IF NOT EXISTS idx_alert_rules_ticker_code
     ON alert_rules (ticker_code);
 
+CREATE TABLE IF NOT EXISTS ticker_daily_bars (
+    id BIGSERIAL PRIMARY KEY,
+    ticker_code CITEXT NOT NULL REFERENCES tracked_tickers(code) ON DELETE CASCADE,
+    trading_date DATE NOT NULL,
+    open NUMERIC(18, 6) NOT NULL,
+    high NUMERIC(18, 6) NOT NULL,
+    low NUMERIC(18, 6) NOT NULL,
+    close NUMERIC(18, 6) NOT NULL,
+    volume NUMERIC(20, 2),
+    source VARCHAR(64) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT ticker_daily_bars_unique UNIQUE (ticker_code, trading_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ticker_daily_bars_ticker_code_date
+    ON ticker_daily_bars (ticker_code, trading_date DESC);
+
 INSERT INTO tracked_tickers (
     code,
     provider,

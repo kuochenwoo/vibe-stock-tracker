@@ -82,6 +82,25 @@
           }
         },
         {
+          "name": "Get Moving Averages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/markets/CL/moving-averages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "markets",
+                "CL",
+                "moving-averages"
+              ]
+            }
+          }
+        },
+        {
           "name": "Get Provider Info",
           "request": {
             "method": "GET",
