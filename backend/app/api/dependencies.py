@@ -1,6 +1,7 @@
 from app.core.config import get_settings
 from app.providers.factory import MarketDataProviderFactory
 from app.repositories.ticker_repository import TickerRepository
+from app.services.fear_greed_service import FearGreedService
 from app.services.market_poller import MarketPoller
 from app.services.market_service import MarketService
 from app.services.market_state import MarketStateStore
@@ -11,6 +12,7 @@ state_store = MarketStateStore()
 provider = MarketDataProviderFactory.create(settings)
 ticker_repository = TickerRepository(settings.data_dir / "tracked_tickers.json")
 ticker_service = TickerService(repository=ticker_repository)
+fear_greed_service = FearGreedService()
 market_service = MarketService(
     provider=provider,
     state_store=state_store,

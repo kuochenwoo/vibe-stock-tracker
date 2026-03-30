@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 const CHART_HEIGHT = 44;
 const TOP_RIM_Y = 0.5;
@@ -11,6 +11,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+const expanded = ref(false);
 
 function formatPrice(value) {
   if (typeof value !== "number") return "--";
@@ -103,117 +105,140 @@ function valueToY(value) {
 
 <template>
   <article class="market-card">
-    <div class="card-head">
-      <div>
-        <p class="label">{{ card.subtitle }}</p>
-        <h2>{{ card.title }}</h2>
+    <div v-if="expanded">
+      <div class="card-head">
+        <div>
+          <p class="label">{{ card.subtitle }}</p>
+          <h2>{{ card.title }}</h2>
+        </div>
+        <div class="card-head-actions">
+          <span class="badge">{{ card.code }}</span>
+          <button class="collapse-btn" type="button" @click="expanded = !expanded">
+            {{ expanded ? "−" : "+" }}
+          </button>
+        </div>
       </div>
-      <span class="badge">{{ card.code }}</span>
+
+      <p class="price">{{ formatPrice(card.data?.price) }}</p>
     </div>
 
-    <p class="price">{{ formatPrice(card.data?.price) }}</p>
-
-    <div class="sparkline-shell">
-      <div class="sparkline-head">
-        <span class="label">Price Line</span>
-        <strong>1D</strong>
+    <div v-else class="card-head card-head-collapsed">
+      <div class="card-collapsed-main">
+        <div>
+          <p class="label">{{ card.subtitle }}</p>
+          <h2>{{ card.title }}</h2>
+        </div>
+        <p class="price price-inline">{{ formatPrice(card.data?.price) }}</p>
       </div>
-      <div class="sparkline-frame">
-        <svg
-          v-if="sparklinePoints"
-          class="sparkline-chart"
-          viewBox="0 0 100 44"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <defs>
-            <linearGradient id="price-area-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="rgba(62, 166, 255, 0.16)" />
-              <stop offset="100%" stop-color="rgba(62, 166, 255, 0)" />
-            </linearGradient>
-          </defs>
-          <rect
-            v-if="currentLineY !== null && lowLineY !== null"
-            class="sparkline-band"
-            x="0"
-            width="100"
-            :y="currentLineY"
-            :height="Math.max(lowLineY - currentLineY, 0)"
-          />
-          <line
-            v-if="referenceLineY !== null"
-            class="sparkline-reference"
-            x1="0"
-            x2="100"
-            :y1="referenceLineY"
-            :y2="referenceLineY"
-          />
-          <line
-            v-if="currentLineY !== null"
-            class="sparkline-current-guide"
-            x1="0"
-            x2="100"
-            :y1="currentLineY"
-            :y2="currentLineY"
-          />
-          <line
-            v-if="highLineY !== null"
-            class="sparkline-guide"
-            x1="0"
-            x2="100"
-            :y1="highLineY"
-            :y2="highLineY"
-          />
-          <line
-            v-if="lowLineY !== null"
-            class="sparkline-guide"
-            x1="0"
-            x2="100"
-            :y1="lowLineY"
-            :y2="lowLineY"
-          />
-          <polygon class="sparkline-area" :points="sparklineAreaPoints" />
-          <polyline class="sparkline-stroke" :points="sparklinePoints" />
-        </svg>
-        <div v-if="card.data?.price != null" class="price-level price-level-current price-level-right-outer price-level-middle">
-          C {{ formatPrice(card.data?.price) }}
-        </div>
-        <div v-if="highLineY !== null" class="price-level price-level-high price-level-right-outer price-level-top">
-          H {{ formatPrice(intradayHigh) }}
-        </div>
-        <div v-if="lowLineY !== null" class="price-level price-level-low price-level-right-outer price-level-bottom">
-          L {{ formatPrice(intradayLow) }}
-        </div>
-        <p v-else class="sparkline-empty">Waiting for enough price updates to draw the line.</p>
+      <div class="card-head-actions">
+        <span class="badge">{{ card.code }}</span>
+        <button class="collapse-btn" type="button" @click="expanded = !expanded">+</button>
       </div>
     </div>
 
-    <div class="metrics">
-      <div>
-        <span>Change</span>
-        <strong>{{ formatDelta(card.data?.change) }}</strong>
+    <div v-if="expanded">
+      <div class="sparkline-shell">
+        <div class="sparkline-head">
+          <span class="label">Price Line</span>
+          <strong>1D</strong>
+        </div>
+        <div class="sparkline-frame">
+          <svg
+            v-if="sparklinePoints"
+            class="sparkline-chart"
+            viewBox="0 0 100 44"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <defs>
+              <linearGradient id="price-area-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(62, 166, 255, 0.16)" />
+                <stop offset="100%" stop-color="rgba(62, 166, 255, 0)" />
+              </linearGradient>
+            </defs>
+            <rect
+              v-if="currentLineY !== null && lowLineY !== null"
+              class="sparkline-band"
+              x="0"
+              width="100"
+              :y="currentLineY"
+              :height="Math.max(lowLineY - currentLineY, 0)"
+            />
+            <line
+              v-if="referenceLineY !== null"
+              class="sparkline-reference"
+              x1="0"
+              x2="100"
+              :y1="referenceLineY"
+              :y2="referenceLineY"
+            />
+            <line
+              v-if="currentLineY !== null"
+              class="sparkline-current-guide"
+              x1="0"
+              x2="100"
+              :y1="currentLineY"
+              :y2="currentLineY"
+            />
+            <line
+              v-if="highLineY !== null"
+              class="sparkline-guide"
+              x1="0"
+              x2="100"
+              :y1="highLineY"
+              :y2="highLineY"
+            />
+            <line
+              v-if="lowLineY !== null"
+              class="sparkline-guide"
+              x1="0"
+              x2="100"
+              :y1="lowLineY"
+              :y2="lowLineY"
+            />
+            <polygon class="sparkline-area" :points="sparklineAreaPoints" />
+            <polyline class="sparkline-stroke" :points="sparklinePoints" />
+          </svg>
+          <div v-if="card.data?.price != null" class="price-level price-level-current price-level-right-outer price-level-middle">
+            C {{ formatPrice(card.data?.price) }}
+          </div>
+          <div v-if="highLineY !== null" class="price-level price-level-high price-level-right-outer price-level-top">
+            H {{ formatPrice(intradayHigh) }}
+          </div>
+          <div v-if="lowLineY !== null" class="price-level price-level-low price-level-right-outer price-level-bottom">
+            L {{ formatPrice(intradayLow) }}
+          </div>
+          <p v-else class="sparkline-empty">Waiting for enough price updates to draw the line.</p>
+        </div>
       </div>
-      <div>
-        <span>Change %</span>
-        <strong>{{ formatPercent(card.data?.change_percent) }}</strong>
-      </div>
-      <div>
-        <span>State</span>
-        <strong>{{ card.data?.market_state ?? "--" }}</strong>
-      </div>
-      <div>
-        <span>Symbol</span>
-        <strong>{{ card.data?.symbol ?? "--" }}</strong>
-      </div>
-      <div>
-        <span>Source</span>
-        <strong>{{ card.data?.source ?? "--" }}</strong>
-      </div>
-    </div>
 
-    <p v-if="card.data?.metadata?.fallback_symbol_used" class="provider-note">
-      Requested {{ card.data.metadata.requested_symbol }}, using fallback
-      {{ card.data.metadata.fallback_symbol_used }} for this provider.
-    </p>
+      <div class="metrics">
+        <div>
+          <span>Change</span>
+          <strong>{{ formatDelta(card.data?.change) }}</strong>
+        </div>
+        <div>
+          <span>Change %</span>
+          <strong>{{ formatPercent(card.data?.change_percent) }}</strong>
+        </div>
+        <div>
+          <span>State</span>
+          <strong>{{ card.data?.market_state ?? "--" }}</strong>
+        </div>
+        <div>
+          <span>Symbol</span>
+          <strong>{{ card.data?.symbol ?? "--" }}</strong>
+        </div>
+        <div>
+          <span>Source</span>
+          <strong>{{ card.data?.source ?? "--" }}</strong>
+        </div>
+      </div>
+
+      <p v-if="card.data?.metadata?.fallback_symbol_used" class="provider-note">
+        Requested {{ card.data.metadata.requested_symbol }}, using fallback
+        {{ card.data.metadata.fallback_symbol_used }} for this provider.
+      </p>
+    </div>
   </article>
 </template>

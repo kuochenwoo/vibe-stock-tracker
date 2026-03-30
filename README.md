@@ -37,6 +37,7 @@ Endpoints:
 - `GET /api/health`
 - `GET /api/markets`
 - `GET /api/providers`
+- `GET /api/sentiment/fear-greed`
 - `GET /api/tickers`
 - `POST /api/tickers`
 - `DELETE /api/tickers/{code}`
@@ -84,6 +85,12 @@ VITE_API_BASE=http://<your-api-host>:8000 npm run dev
 ```
 
 By default, the frontend now calls `http://<current-browser-host>:8000`, so when you open the UI from another machine on your LAN it will target the backend on that same host automatically.
+
+Fear & Greed gauge:
+
+- The page now includes a CNN-style Fear & Greed gauge card.
+- The frontend fetches it from `GET /api/sentiment/fear-greed`.
+- The backend pulls the data from CNN's market sentiment feed and normalizes the current reading plus historical comparison points.
 
 ## Alert behavior
 

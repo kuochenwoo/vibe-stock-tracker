@@ -98,6 +98,7 @@ h2 {
 }
 
 .market-card,
+.fear-greed-card,
 .alerts-panel,
 .news-panel,
 .errors-panel,
@@ -121,6 +122,12 @@ h2 {
     linear-gradient(180deg, rgba(21, 101, 192, 0.02) 0%, rgba(255, 255, 255, 0.9) 100%),
     var(--panel);
   box-shadow: var(--shadow-2);
+}
+
+.fear-greed-card {
+  background:
+    linear-gradient(180deg, rgba(21, 101, 192, 0.04) 0%, rgba(255, 255, 255, 0.96) 100%),
+    var(--panel);
 }
 
 .header-item span,
@@ -161,6 +168,29 @@ h2 {
   gap: 16px;
 }
 
+.card-head {
+  align-items: flex-start;
+}
+
+.card-head-collapsed {
+  align-items: center;
+}
+
+.card-collapsed-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .ticker-head {
   align-items: flex-start;
   min-height: 0;
@@ -188,6 +218,13 @@ h2 {
   font-weight: 600;
 }
 
+.gauge-source {
+  align-self: start;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
 .price {
   margin-top: 16px;
   font-size: clamp(2.6rem, 4vw, 4rem);
@@ -197,8 +234,127 @@ h2 {
   line-height: 1;
 }
 
+.price-inline {
+  margin-top: 0;
+  font-size: clamp(1.7rem, 2.6vw, 2.4rem);
+  white-space: nowrap;
+}
+
+.collapse-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(21, 101, 192, 0.15);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  box-shadow: 0 6px 16px rgba(21, 101, 192, 0.08);
+}
+
 .sparkline-shell {
   margin-top: 18px;
+}
+
+.fear-greed-body {
+  margin-top: 18px;
+}
+
+.fear-greed-state {
+  margin-top: 18px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.gauge-wrap {
+  position: relative;
+}
+
+.gauge-chart {
+  width: 100%;
+  height: auto;
+}
+
+.gauge-score-head {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.gauge-score-head strong {
+  font-size: 2.4rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.gauge-score-head span {
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.gauge-segment {
+  fill: none;
+  stroke-width: 14;
+  stroke-linecap: butt;
+}
+
+.gauge-divider {
+  stroke: rgba(96, 116, 145, 0.3);
+  stroke-width: 1;
+}
+
+.gauge-needle line {
+  stroke: #263447;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.gauge-needle circle {
+  fill: #263447;
+}
+
+.gauge-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.fear-greed-updated {
+  margin-top: 6px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.fear-greed-readings {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.fear-greed-reading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(119, 135, 159, 0.12);
+}
+
+.fear-greed-reading span {
+  color: var(--muted);
+}
+
+.fear-greed-reading strong {
+  font-variant-numeric: tabular-nums;
 }
 
 .sparkline-head {

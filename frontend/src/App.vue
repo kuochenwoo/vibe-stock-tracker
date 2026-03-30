@@ -2,11 +2,13 @@
 import AlertRuleForm from "./components/AlertRuleForm.vue";
 import AlertRuleList from "./components/AlertRuleList.vue";
 import ErrorPanel from "./components/ErrorPanel.vue";
+import FearGreedGauge from "./components/FearGreedGauge.vue";
 import MarketCard from "./components/MarketCard.vue";
 import NotificationPopup from "./components/NotificationPopup.vue";
 import TickerManager from "./components/TickerManager.vue";
 import { useAlerts } from "./composables/useAlerts";
 import { useMarketStream } from "./composables/useMarketStream";
+import { useSentiment } from "./composables/useSentiment";
 
 const {
   cards,
@@ -16,6 +18,11 @@ const {
   snapshot,
   trackedTickers,
 } = useMarketStream();
+const {
+  error: fearGreedError,
+  loading: fearGreedLoading,
+  snapshot: fearGreedSnapshot,
+} = useSentiment();
 const {
   activeAlerts,
   alertForm,
@@ -55,6 +62,12 @@ function formatTime(value) {
       </section>
 
       <section class="sidebar">
+        <FearGreedGauge
+          :snapshot="fearGreedSnapshot"
+          :loading="fearGreedLoading"
+          :error="fearGreedError"
+        />
+
         <TickerManager
           :tickers="trackedTickers"
           :on-add="createTicker"

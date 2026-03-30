@@ -74,6 +74,24 @@
               ]
             }
           }
+        },
+        {
+          "name": "Get Fear & Greed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sentiment/fear-greed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sentiment",
+                "fear-greed"
+              ]
+            }
+          }
         }
       ]
     },

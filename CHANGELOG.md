@@ -1143,3 +1143,192 @@ The ticker add button now sits directly on the upper-right corner and reads as a
 
 ### Reason
 These changes were made to match the requested corner placement and solid-button appearance more precisely.
+
+## 2026-03-30 11:00:18
+
+### Change
+Added a Fear & Greed gauge to the page, backed by a new sentiment API endpoint and frontend gauge card.
+
+### STAR
+
+#### Situation
+The page tracked futures prices but did not yet show a broader market sentiment indicator, and the requested Fear & Greed gauge from CNN was missing entirely.
+
+#### Task
+Add a Fear & Greed gauge to the UI with a proper backend-backed data source rather than hardcoded placeholder data.
+
+#### Action
+- Added [sentiment.py](/Users/guozhen_wu/Documents/vibe-code-test/backend/app/api/routes/sentiment.py), [sentiment.py](/Users/guozhen_wu/Documents/vibe-code-test/backend/app/models/sentiment.py), and [fear_greed_service.py](/Users/guozhen_wu/Documents/vibe-code-test/backend/app/services/fear_greed_service.py) to fetch and normalize CNN Fear & Greed data through `GET /api/sentiment/fear-greed`.
+- Wired the new route into [main.py](/Users/guozhen_wu/Documents/vibe-code-test/backend/app/main.py) and [dependencies.py](/Users/guozhen_wu/Documents/vibe-code-test/backend/app/api/dependencies.py).
+- Added [FearGreedGauge.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/FearGreedGauge.vue) and [useSentiment.js](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/composables/useSentiment.js), then mounted the gauge in [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue).
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) for the new gauge card, and updated [postman_collection.json](/Users/guozhen_wu/Documents/vibe-code-test/postman_collection.json) plus [README.md](/Users/guozhen_wu/Documents/vibe-code-test/README.md) for the new endpoint.
+
+#### Result
+The app now includes a live Fear & Greed gauge card with the current reading, rating, and comparison points, backed by a dedicated sentiment API endpoint.
+
+### Reason
+These changes were made to expand the page from pure quote tracking into a more complete market-monitoring dashboard.
+
+## 2026-03-30 11:03:21
+
+### Change
+Fixed the Fear & Greed comparison readings and reshaped the gauge toward a flatter CNN-style dial layout.
+
+### STAR
+
+#### Situation
+The first Fear & Greed implementation left the historical comparison rows empty, used a more rounded dial treatment than requested, and let the gauge text overlap the needle area.
+
+#### Task
+Correct the data mapping for the comparison readings and restyle the gauge so it is flatter and clearer, closer to the CNN layout.
+
+#### Action
+- Updated [fear_greed_service.py](/Users/guozhen_wu/Documents/vibe-code-test/backend/app/services/fear_greed_service.py) to read `previous_close`, `previous_1_week`, `previous_1_month`, and `previous_1_year` from the actual CNN current payload structure.
+- Updated [FearGreedGauge.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/FearGreedGauge.vue) to move the main score text above the dial, add scale markers, and remove the overlapping center label treatment.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) so the gauge uses flatter butt-capped segments and a cleaner lower scale closer to the CNN visual style.
+
+#### Result
+The historical comparison rows now populate correctly when CNN provides them, and the gauge no longer has the text/needle overlap while reading more like a flatter sentiment dial.
+
+### Reason
+These changes were made to fix the missing data and improve the gauge fidelity relative to the requested reference design.
+
+## 2026-03-30 11:03:21
+
+### Change
+Corrected the Fear & Greed comparison parsing for CNN’s live numeric fields and removed the grey base track from the gauge.
+
+### STAR
+
+#### Situation
+The Fear & Greed endpoint still returned `null` for the comparison rows because CNN’s live feed was serving those values as plain numbers, while the parser expected nested objects. The gauge also still showed a grey base track underneath the colored bands.
+
+#### Task
+Parse CNN’s live comparison values correctly and simplify the gauge visual by removing the grey underlay.
+
+#### Action
+- Updated [fear_greed_service.py](/Users/guozhen_wu/Documents/vibe-code-test/backend/app/services/fear_greed_service.py) so comparison readings now support both object-shaped and numeric CNN values.
+- Removed the gauge base track from [FearGreedGauge.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/FearGreedGauge.vue).
+- Removed the corresponding grey track styling from [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css).
+
+#### Result
+The comparison rows now populate from CNN’s live numeric data, and the gauge renders without the grey background shadow under the colored bands.
+
+### Reason
+These changes were made to match the live CNN feed shape more accurately and clean up the gauge appearance.
+
+## 2026-03-30 11:09:13
+
+### Change
+Reduced the prominence of the Fear & Greed update timestamp and switched the comparison rows to color-coded numeric values.
+
+### STAR
+
+#### Situation
+The `Updated` timestamp still read too prominently in the Fear & Greed card, and the comparison rows used text labels instead of letting the gauge color language communicate the sentiment band.
+
+#### Task
+Make the update timestamp visually lighter and render comparison values using the same color coding as the gauge bands.
+
+#### Action
+- Updated [FearGreedGauge.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/FearGreedGauge.vue) so the comparison rows now show only the numeric value and tint it with the matching gauge band color.
+- Changed the same component to render the update timestamp as a smaller caption-style line.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to support the smaller timestamp styling and tabular numeric comparison values.
+
+#### Result
+The Fear & Greed card now uses cleaner visual hierarchy: the update time is quieter, and the historical comparisons communicate sentiment mainly through color instead of extra text.
+
+### Reason
+These changes were made to simplify the card and align the comparison readings with the gauge’s visual language.
+
+## 2026-03-30 11:10:36
+
+### Change
+Collapsed the Fear & Greed update timestamp into a single lightweight line directly under the gauge.
+
+### STAR
+
+#### Situation
+The update timestamp still occupied too much visual structure below the gauge because it was rendered inside its own chip-like block.
+
+#### Task
+Reduce the update timestamp to a simple one-line caption just under the gauge.
+
+#### Action
+- Updated [FearGreedGauge.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/FearGreedGauge.vue) to replace the separate updated block with a single line reading `Updated ...`.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to style that line as a small centered caption.
+
+#### Result
+The update timestamp now sits lightly under the gauge in one compact line instead of as a separate block.
+
+### Reason
+These changes were made to reduce clutter and keep the area under the gauge visually quiet.
+
+## 2026-03-30 11:13:15
+
+### Change
+Added a collapse control to each ticker card so the default state shows only the ticker name and current price.
+
+### STAR
+
+#### Situation
+Each ticker panel always rendered the full chart and metric set, which made the page denser than necessary when the user only needed a quick quote overview.
+
+#### Task
+Add a collapse/expand interaction so each ticker card can stay compact by default and reveal the full data on demand.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to add a per-card collapse toggle and hide the chart, metrics, and provider note until expanded.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to style the new collapse button and align it with the card header.
+
+#### Result
+Ticker cards now open in a compact state showing only the ticker name and current price, and expand to show the full panel when clicked.
+
+### Reason
+These changes were made to improve scanability and let the user reveal detail only when needed.
+
+## 2026-03-30 11:15:16
+
+### Change
+Adjusted the collapsed ticker card layout so the ticker name and current price appear on the same line.
+
+### STAR
+
+#### Situation
+The new collapsed card state hid the full details correctly, but it still placed the current price on a separate line instead of keeping the summary compact.
+
+#### Task
+Make the collapsed state more concise by placing the ticker name and current price on the same line, while preserving the existing expanded layout.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to render a dedicated collapsed header layout with the ticker name and price side by side.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to style the collapsed summary row and add a smaller inline price treatment.
+
+#### Result
+Collapsed ticker cards now show the name and current price in one compact line, and expanding a card still restores the full existing layout.
+
+### Reason
+These changes were made to make the collapsed state denser and easier to scan quickly.
+
+## 2026-03-30 11:21:25
+
+### Change
+Added an SVG favicon alongside the existing `.ico` file to improve browser favicon detection.
+
+### STAR
+
+#### Situation
+The page favicon was not showing reliably even though the `.ico` file existed and was linked in the HTML.
+
+#### Task
+Improve favicon compatibility so modern browsers pick up the page icon more consistently.
+
+#### Action
+- Added [favicon.svg](/Users/guozhen_wu/Documents/vibe-code-test/frontend/public/favicon.svg) as a clean vector favicon.
+- Updated [index.html](/Users/guozhen_wu/Documents/vibe-code-test/frontend/index.html) to register both the SVG favicon and the existing `.ico`, plus a `shortcut icon` fallback.
+
+#### Result
+The page now provides multiple favicon formats, which improves icon rendering reliability across browsers.
+
+### Reason
+These changes were made to reduce favicon cache/format issues and make the page icon show up more consistently.
