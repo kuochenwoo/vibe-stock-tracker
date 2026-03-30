@@ -238,6 +238,13 @@ h2 {
     var(--panel);
   box-shadow: var(--shadow-2);
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.market-card * {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .market-card-menu-open {
