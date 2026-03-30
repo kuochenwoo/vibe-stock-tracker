@@ -1,4 +1,4 @@
-import { computed, reactive, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 const STORAGE_KEY = "market-alerts.rules.v1";
 const NOTIFICATION_TAG_PREFIX = "market-alert";
@@ -16,11 +16,6 @@ export function useAlerts(snapshot, trackedTickers) {
   const notificationPermission = ref(
     typeof Notification === "undefined" ? "unsupported" : Notification.permission,
   );
-  const alertForm = reactive({
-    market: "",
-    direction: "above",
-    value: "",
-  });
   const alertRules = ref(loadRules());
   const triggeredKeys = ref(new Set());
   const popupNotice = ref(null);
@@ -40,12 +35,8 @@ export function useAlerts(snapshot, trackedTickers) {
     trackedTickers,
     (tickers) => {
       if (!tickers.length) {
-        alertForm.market = "";
         alertRules.value = [];
         return;
-      }
-      if (!tickers.some((ticker) => ticker.code === alertForm.market)) {
-        alertForm.market = tickers[0].code;
       }
       alertRules.value = alertRules.value.filter((rule) =>
         tickers.some((ticker) => ticker.code === rule.market),
@@ -84,20 +75,18 @@ export function useAlerts(snapshot, trackedTickers) {
     notificationPermission.value = await Notification.requestPermission();
   }
 
-  async function addAlert() {
-    const value = Number(alertForm.value);
-    if (!Number.isFinite(value) || !alertForm.market) return;
+  async function addAlert(payload) {
+    const value = Number(payload?.value);
+    if (!Number.isFinite(value) || !payload?.market) return;
 
     alertRules.value.unshift({
       id: createRuleId(),
-      market: alertForm.market,
-      direction: alertForm.direction,
+      market: payload.market,
+      direction: payload.direction,
       value,
       triggered: false,
       created_at: new Date().toISOString(),
     });
-
-    alertForm.value = "";
   }
 
   function removeAlert(id) {
@@ -177,7 +166,6 @@ export function useAlerts(snapshot, trackedTickers) {
 
   return {
     activeAlerts,
-    alertForm,
     notificationPermission,
     popupNotice,
     addAlert,

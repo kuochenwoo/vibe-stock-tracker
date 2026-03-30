@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
 const CHART_HEIGHT = 44;
 const TOP_RIM_Y = 0.5;
@@ -11,8 +11,30 @@ const props = defineProps({
     required: true,
   },
 });
+const emit = defineEmits(["open-alarm"]);
 
 const expanded = ref(false);
+const actionMenuOpen = ref(false);
+const actionMenuRef = ref(null);
+
+function toggleExpanded() {
+  expanded.value = !expanded.value;
+  if (!expanded.value) {
+    actionMenuOpen.value = false;
+  }
+}
+
+function openAlarmDrawer() {
+  expanded.value = true;
+  emit("open-alarm", { code: props.card.code, name: props.card.title, symbol: props.card.subtitle });
+  actionMenuOpen.value = false;
+}
+
+function handleOutsideClick(event) {
+  if (!actionMenuOpen.value) return;
+  if (actionMenuRef.value?.contains(event.target)) return;
+  actionMenuOpen.value = false;
+}
 
 function formatPrice(value) {
   if (typeof value !== "number") return "--";
@@ -101,6 +123,14 @@ function valueToY(value) {
   return CHART_HEIGHT - ((value - min) / range) * CHART_HEIGHT;
 }
 
+onMounted(() => {
+  document.addEventListener("click", handleOutsideClick);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleOutsideClick);
+});
+
 </script>
 
 <template>
@@ -113,9 +143,18 @@ function valueToY(value) {
         </div>
         <div class="card-head-actions">
           <span class="badge">{{ card.code }}</span>
-          <button class="collapse-btn" type="button" @click="expanded = !expanded">
-            {{ expanded ? "−" : "+" }}
-          </button>
+          <div ref="actionMenuRef" class="card-action-menu">
+            <button class="action-btn" type="button" @click.stop="actionMenuOpen = !actionMenuOpen">+</button>
+            <button
+              v-if="actionMenuOpen"
+              class="action-menu-item"
+              type="button"
+              @click.stop="openAlarmDrawer"
+            >
+              Set alarm
+            </button>
+          </div>
+          <button class="collapse-btn" type="button" @click="toggleExpanded">−</button>
         </div>
       </div>
 
@@ -132,7 +171,18 @@ function valueToY(value) {
       </div>
       <div class="card-head-actions">
         <span class="badge">{{ card.code }}</span>
-        <button class="collapse-btn" type="button" @click="expanded = !expanded">+</button>
+        <div ref="actionMenuRef" class="card-action-menu">
+          <button class="action-btn" type="button" @click.stop="actionMenuOpen = !actionMenuOpen">+</button>
+          <button
+            v-if="actionMenuOpen"
+            class="action-menu-item"
+            type="button"
+            @click.stop="openAlarmDrawer"
+          >
+            Set alarm
+          </button>
+        </div>
+        <button class="collapse-btn" type="button" @click="toggleExpanded">▾</button>
       </div>
     </div>
 

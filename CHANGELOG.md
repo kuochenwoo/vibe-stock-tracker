@@ -1310,6 +1310,267 @@ Collapsed ticker cards now show the name and current price in one compact line, 
 ### Reason
 These changes were made to make the collapsed state denser and easier to scan quickly.
 
+## 2026-03-30 11:35:41
+
+### Change
+Created a dedicated utility sidebar grouping the tracked tickers panel and alarms panel together.
+
+### STAR
+
+#### Situation
+The right column contained several stacked panels, but tracked tickers and alarms still read as separate cards rather than as part of a single sidebar utility area.
+
+#### Task
+Restructure the page so tracked tickers and alarms live inside a dedicated sidebar section.
+
+#### Action
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) to wrap the ticker manager and alarms panel in a dedicated `utility-sidebar` container.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to style that sidebar container as a grouped right-column utility area with sticky behavior.
+
+#### Result
+The page now has a clearer sidebar structure for the utility controls: tracked tickers and alarms are grouped together as one functional sidebar section.
+
+### Reason
+These changes were made to make the utility controls feel more intentionally organized and easier to use.
+
+## 2026-03-30 11:37:49
+
+### Change
+Moved tracked tickers and alarms into a left-side action bar with popup settings windows instead of inline panels.
+
+### STAR
+
+#### Situation
+The earlier sidebar grouping still left tracked tickers and alarms rendered as inline panels in the page layout, while the requested interaction was a left-side sidebar with single buttons that open settings windows on demand.
+
+#### Task
+Move ticker and alarm controls into a left-side action bar and show their settings through popup dialogs.
+
+#### Action
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) to add a fixed left-side action bar with `Tracked Tickers` and `Alarms` buttons.
+- Added modal dialog wrappers in the same file so clicking either button opens a settings window instead of rendering the controls inline.
+- Refactored [TickerManager.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/TickerManager.vue) into modal content instead of a self-opening panel.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) for the left sidebar buttons and shared settings modal styling.
+
+#### Result
+Tracked tickers and alarms now live behind left-side sidebar buttons, and their full settings appear only when the user opens the corresponding popup window.
+
+### Reason
+These changes were made to match the requested sidebar interaction model and keep the main page cleaner.
+
+## 2026-03-30 11:41:23
+
+### Change
+Removed the extra ticker modal heading copy and reverted alarms from popup settings back to an inline panel.
+
+### STAR
+
+#### Situation
+The ticker settings popup still showed the extra `Sidebar / Tracked tickers` heading, and the alarm settings had been moved into a popup flow that was no longer desired.
+
+#### Task
+Simplify the ticker popup header and restore the alarm configuration panel to the main page layout.
+
+#### Action
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) to remove the alarm sidebar button and alarm popup modal.
+- Restored the alarms panel inline in the right column of the same file.
+- Removed the extra `Sidebar / Tracked tickers` text from the ticker popup header.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to keep the ticker modal content spacing clean after removing the modal section heading.
+
+#### Result
+The ticker popup now opens with a minimal header, and alarms are back on the page as an inline settings panel.
+
+### Reason
+These changes were made to match the requested rollback for alarms and simplify the ticker popup presentation.
+
+## 2026-03-30 11:44:52
+
+### Change
+Moved alarm settings into each ticker card via a per-card `+` menu and a right-side drawer, while removing the remaining `Instrument Settings` title.
+
+### STAR
+
+#### Situation
+The page still used a global alarm panel, and the ticker settings modal still showed the extra `Instrument Settings` heading. The requested interaction was to configure alarms from each ticker panel separately, with a right-side drawer that does not cover the live price cards.
+
+#### Task
+Remove the remaining ticker settings title, replace the global alarm panel with per-ticker alarm entry points, and open alarm settings in a non-overlapping right-side drawer.
+
+#### Action
+- Updated [TickerManager.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/TickerManager.vue) to remove the `Instrument Settings` heading.
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to add a per-card `+` action menu that reveals `Set alarm` directly under the button.
+- Added [TickerAlarmDrawer.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/TickerAlarmDrawer.vue) to handle ticker-specific alarm creation and alert listing in a drawer.
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) to remove the global alarm panel and mount the new right-side drawer beside the main layout instead of over it.
+- Updated [useAlerts.js](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/composables/useAlerts.js) so alerts can be created from explicit payloads instead of relying on one shared page form.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) for the per-card action menu, right-side drawer, and non-overlapping workspace layout.
+
+#### Result
+Alarm settings are now opened from each ticker card individually, and the drawer appears on the right side without covering the live price panels.
+
+### Reason
+These changes were made to keep real-time price tracking visible while making alarm configuration more contextual to each ticker.
+
+## 2026-03-30 11:51:08
+
+### Change
+Closed the per-card alarm menu on collapse and hid the Fear & Greed panel while the alarm drawer is open.
+
+### STAR
+
+#### Situation
+Two interaction issues remained: collapsing a ticker card could leave the `Set alarm` menu visible, and opening the alarm drawer while a price card was expanded left the Fear & Greed panel competing for space with the live market view.
+
+#### Task
+Ensure the card action menu closes when a card collapses, and reduce layout competition during alarm setup by hiding the Fear & Greed panel while the drawer is open.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) so collapsing a card also resets the inline `Set alarm` action menu.
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) so the Fear & Greed panel is hidden whenever the alarm drawer is open.
+
+#### Result
+The alarm action tag no longer lingers after a card collapses, and the live market area stays cleaner while alarm settings are open.
+
+### Reason
+These changes were made to tighten the interaction flow and keep attention on the live price panels during alarm setup.
+
+## 2026-03-30 11:53:32
+
+### Change
+Hide the Realtime News placeholder while the alarm drawer is open.
+
+### STAR
+
+#### Situation
+The Fear & Greed panel was already hidden during alarm setup, but the Realtime News placeholder still occupied sidebar space and added visual noise while configuring alarms.
+
+#### Task
+Hide the news placeholder during alarm setup so the page stays focused on live prices and the alarm drawer.
+
+#### Action
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) so the `Realtime News / Feed placeholder` section is also hidden whenever the alarm drawer is open.
+
+#### Result
+When the alarm drawer is open, both the Fear & Greed panel and the Realtime News placeholder are removed from the visible sidebar area.
+
+### Reason
+These changes were made to reduce distraction and keep the layout focused during alarm configuration.
+
+## 2026-03-30 11:54:52
+
+### Change
+Collapsed the inner main layout to a single column while the alarm drawer is open so the price panels fill the empty gap.
+
+### STAR
+
+#### Situation
+When the alarm drawer opened, the page hid the Fear & Greed and news panels, but the main content grid still reserved the old sidebar column width, leaving unused space between the price panels and the drawer.
+
+#### Task
+Make the price panel area expand into that empty space during alarm setup.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) so the inner `workspace-main` grid switches to a single-column layout whenever the alarm drawer is open.
+
+#### Result
+During alarm setup, the price panels now expand to fill the previously empty gap beside the drawer.
+
+### Reason
+These changes were made to keep the layout dense and avoid wasted horizontal space while configuring alarms.
+
+## 2026-03-30 11:57:23
+
+### Change
+Replaced the standalone left-side ticker button with an upper-left `Settings` button that reveals a hover menu.
+
+### STAR
+
+#### Situation
+The page still used a single fixed left-side `Tracked Tickers` button, while the requested interaction was a settings control in the upper-left that shows a menu on hover.
+
+#### Task
+Replace the standalone button with a hover-driven settings menu and include `Tracked Tickers` inside it.
+
+#### Action
+- Updated [App.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/App.vue) to replace the fixed button with a `Settings` trigger and hover menu.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to style the upper-left settings control, dropdown menu, and menu item hover behavior.
+
+#### Result
+The page now shows a `Settings` button in the upper-left, and hovering over it reveals a menu that includes `Tracked Tickers`.
+
+### Reason
+These changes were made to match the requested navigation pattern and reduce the visual weight of the fixed left-side control.
+
+## 2026-03-30 11:59:26
+
+### Change
+Changed the settings hover menu to a neutral non-blue palette and made `Set alarm` auto-expand collapsed ticker cards.
+
+### STAR
+
+#### Situation
+The settings dropdown still used the same blue accent language as the rest of the controls, and clicking `Set alarm` from a collapsed card did not first expand that card.
+
+#### Task
+Give the settings menu a distinct non-blue color treatment and ensure `Set alarm` expands the ticker card before opening the drawer.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) so the settings hover menu uses a warmer neutral palette instead of blue.
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) so clicking `Set alarm` forces the ticker card into expanded state before opening the alarm drawer.
+
+#### Result
+The settings menu now has a different visual tone from the blue action controls, and alarm setup always opens from an expanded ticker card.
+
+### Reason
+These changes were made to improve visual separation in the menu and make the alarm workflow feel more consistent.
+
+## 2026-03-30 12:00:56
+
+### Change
+Strengthened the `Set alarm` hover state and made the inline alarm tag dismiss when clicking elsewhere on the page.
+
+### STAR
+
+#### Situation
+The `Set alarm` action still felt visually understated, and once opened it stayed visible until toggled again instead of dismissing naturally when the user clicked elsewhere.
+
+#### Task
+Make the inline alarm action feel more obviously interactive and close it automatically on outside click.
+
+#### Action
+- Updated [MarketCard.vue](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/components/MarketCard.vue) to register an outside-click handler that closes the alarm action menu when the user clicks elsewhere on the page.
+- Updated the same component so the action button clicks use `stop` handling and don’t immediately re-close themselves.
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to give `Set alarm` a stronger hover state with clearer emphasis.
+
+#### Result
+The `Set alarm` tag now highlights more clearly on hover and dismisses automatically when the user clicks anywhere else on the page.
+
+### Reason
+These changes were made to make the per-card alarm interaction feel cleaner and more predictable.
+
+## 2026-03-30 12:03:32
+
+### Change
+Strengthened the collapsed-card alarm tag layering and made its hover background fully opaque.
+
+### STAR
+
+#### Situation
+When a ticker card was collapsed, hovering over the `Set alarm` tag could make it appear slightly transparent, which suggested a layering or background-opacity problem.
+
+#### Task
+Make the inline alarm tag render solid and fully readable in the collapsed card state.
+
+#### Action
+- Updated [styles.css](/Users/guozhen_wu/Documents/vibe-code-test/frontend/src/styles.css) to raise the stacking context of the card action menu.
+- Changed the `Set alarm` tag to use a fully opaque base background and a fully opaque hover background.
+- Increased the tag z-index so it stays clearly above surrounding card layers.
+
+#### Result
+The `Set alarm` tag now remains solid and visually stable when hovered in a collapsed ticker card.
+
+### Reason
+These changes were made to remove the semi-transparent look and keep the inline alarm control legible.
+
 ## 2026-03-30 11:21:25
 
 ### Change
