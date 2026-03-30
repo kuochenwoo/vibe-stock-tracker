@@ -6,7 +6,7 @@ const DEFAULT_API_BASE =
     : `${window.location.protocol}//${window.location.hostname}:8000`;
 const API_BASE = import.meta.env.VITE_API_BASE ?? DEFAULT_API_BASE;
 const WS_BASE = API_BASE.replace(/^http/, "ws");
-const HISTORY_LIMIT = 30;
+const HISTORY_POINT_LIMIT = 288;
 const ORDER_STORAGE_KEY = "market-alerts:ticker-order";
 const ORDER_SYNC_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -51,7 +51,7 @@ export function useMarketStream() {
       title: ticker.name,
       subtitle: ticker.symbol,
       data: snapshot.value.markets[ticker.code] ?? null,
-      history: priceHistory.value[ticker.code] ?? [],
+      history: priceHistory.value[ticker.code]?.points ?? [],
     })),
   );
 
@@ -114,6 +114,7 @@ export function useMarketStream() {
       const nextSnapshot = JSON.parse(event.data);
       snapshot.value = nextSnapshot;
       syncTickerOrder(nextSnapshot.tracked_tickers ?? []);
+      ensureChartHistory(nextSnapshot.tracked_tickers ?? []);
       updateHistory(nextSnapshot);
     });
 
@@ -135,9 +136,15 @@ export function useMarketStream() {
     for (const ticker of nextSnapshot.tracked_tickers ?? []) {
       const price = nextSnapshot.markets?.[ticker.code]?.price;
       if (typeof price !== "number") continue;
-
-      const series = [...(nextHistory[ticker.code] ?? []), price];
-      nextHistory[ticker.code] = series.slice(-HISTORY_LIMIT);
+      const pointTimestamp =
+        nextSnapshot.markets?.[ticker.code]?.metadata?.last_bar_time ?? nextSnapshot.updated_at;
+      nextHistory[ticker.code] = mergeLivePoint(
+        nextHistory[ticker.code] ?? { points: [] },
+        {
+          timestamp: pointTimestamp,
+          price,
+        },
+      );
     }
 
     for (const code of Object.keys(nextHistory)) {
@@ -237,6 +244,38 @@ export function useMarketStream() {
       // Leave dirty state intact so the next hourly attempt can retry.
     }
   }
+
+  async function ensureChartHistory(tickers) {
+    const missingCodes = tickers
+      .map((ticker) => ticker.code)
+      .filter((code) => !priceHistory.value[code]);
+
+    if (!missingCodes.length) return;
+
+    const histories = await Promise.all(
+      missingCodes.map(async (code) => {
+        try {
+          const response = await fetch(`${API_BASE}/api/markets/${code}/history`);
+          if (!response.ok) return null;
+          return await response.json();
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    const nextHistory = { ...priceHistory.value };
+    for (const history of histories) {
+      if (!history?.code || !Array.isArray(history.points)) continue;
+      nextHistory[history.code] = {
+        points: history.points.map((point) => ({
+          timestamp: point.timestamp,
+          price: Number(point.price),
+        })),
+      };
+    }
+    priceHistory.value = nextHistory;
+  }
 }
 
 function loadTickerOrder() {
@@ -253,4 +292,41 @@ function loadTickerOrder() {
 function persistTickerOrder(order) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(order));
+}
+
+function mergeLivePoint(history, point) {
+  const timestamp = new Date(point.timestamp);
+  if (Number.isNaN(timestamp.getTime())) {
+    return history;
+  }
+
+  const nextPoint = {
+    timestamp: timestamp.toISOString(),
+    price: Number(point.price),
+  };
+  const bucket = floorToFiveMinuteBucket(timestamp);
+  const points = [...(history.points ?? [])];
+  const lastPoint = points.at(-1);
+
+  if (lastPoint) {
+    const lastBucket = floorToFiveMinuteBucket(new Date(lastPoint.timestamp));
+    if (lastBucket === bucket) {
+      points[points.length - 1] = nextPoint;
+    } else if (bucket > lastBucket) {
+      points.push(nextPoint);
+    }
+  } else {
+    points.push(nextPoint);
+  }
+
+  return {
+    points: points.slice(-HISTORY_POINT_LIMIT),
+  };
+}
+
+function floorToFiveMinuteBucket(date) {
+  const bucket = new Date(date);
+  bucket.setUTCSeconds(0, 0);
+  bucket.setUTCMinutes(Math.floor(bucket.getUTCMinutes() / 5) * 5);
+  return bucket.getTime();
 }

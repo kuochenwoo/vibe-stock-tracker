@@ -63,6 +63,25 @@
           }
         },
         {
+          "name": "Get Market History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/markets/CL/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "markets",
+                "CL",
+                "history"
+              ]
+            }
+          }
+        },
+        {
           "name": "Get Provider Info",
           "request": {
             "method": "GET",

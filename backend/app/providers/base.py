@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.models.market import MarketSnapshot, TrackedTicker
+from app.models.market import MarketHistoryPoint, MarketSnapshot, TrackedTicker
 
 
 class MarketDataProvider(ABC):
@@ -8,4 +8,14 @@ class MarketDataProvider(ABC):
 
     @abstractmethod
     async def fetch_snapshot(self, tickers: list[TrackedTicker]) -> MarketSnapshot:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def fetch_history(
+        self,
+        ticker: TrackedTicker,
+        *,
+        period: str,
+        interval: str,
+    ) -> list[MarketHistoryPoint]:
         raise NotImplementedError

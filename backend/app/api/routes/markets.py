@@ -5,6 +5,7 @@ from app.models.market import (
     AlertRule,
     CreateTrackedTickerRequest,
     CreateAlertRuleRequest,
+    MarketHistoryResponse,
     MarketSnapshot,
     PanelOrderPreference,
     TrackedTicker,
@@ -20,6 +21,14 @@ async def get_markets() -> MarketSnapshot:
     if snapshot.updated_at is None:
         snapshot = await market_service.refresh_snapshot()
     return snapshot
+
+
+@router.get("/markets/{code}/history", response_model=MarketHistoryResponse)
+async def get_market_history(code: str) -> MarketHistoryResponse:
+    try:
+        return await market_service.get_history(code)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 @router.get("/providers")

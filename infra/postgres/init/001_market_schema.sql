@@ -84,7 +84,10 @@ VALUES
         'USD',
         jsonb_build_object(
             'sector', 'energy',
-            'category', 'commodities'
+            'category', 'commodities',
+            'asset_type', 'futures',
+            'session_timezone', 'America/New_York',
+            'session_start', '18:00'
         )
     ),
     (
@@ -97,7 +100,10 @@ VALUES
         'USD',
         jsonb_build_object(
             'sector', 'metals',
-            'category', 'commodities'
+            'category', 'commodities',
+            'asset_type', 'futures',
+            'session_timezone', 'America/New_York',
+            'session_start', '18:00'
         )
     )
 ON CONFLICT (code) DO NOTHING;

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import yfinance as yf
 
 from app.core.config import Settings
-from app.models.market import MarketQuote, MarketSnapshot, TrackedTicker
+from app.models.market import MarketHistoryPoint, MarketQuote, MarketSnapshot, TrackedTicker
 from app.providers.base import MarketDataProvider
 
 
@@ -30,6 +30,20 @@ class YFinanceMarketDataProvider(MarketDataProvider):
             tracked_tickers=tickers,
             markets=markets,
             errors=errors,
+        )
+
+    async def fetch_history(
+        self,
+        ticker: TrackedTicker,
+        *,
+        period: str,
+        interval: str,
+    ) -> list[MarketHistoryPoint]:
+        return await asyncio.to_thread(
+            self._fetch_history,
+            ticker,
+            period,
+            interval,
         )
 
     def _fetch_quote(self, ticker: TrackedTicker) -> MarketQuote:
@@ -80,6 +94,34 @@ class YFinanceMarketDataProvider(MarketDataProvider):
                 "prev_5m_bar_closed_at": prev_5m_closed_at,
             },
         )
+
+    def _fetch_history(
+        self,
+        ticker: TrackedTicker,
+        period: str,
+        interval: str,
+    ) -> list[MarketHistoryPoint]:
+        instrument = yf.Ticker(ticker.symbol)
+        history = instrument.history(
+            period=period,
+            interval=interval,
+            auto_adjust=False,
+            prepost=True,
+        )
+        closes = history["Close"].dropna()
+        if closes.empty:
+            raise ValueError(f"No history returned for {ticker.symbol}")
+
+        points: list[MarketHistoryPoint] = []
+        for timestamp, close in closes.items():
+            points.append(
+                MarketHistoryPoint(
+                    timestamp=timestamp.to_pydatetime().astimezone(timezone.utc),
+                    price=float(close),
+                )
+            )
+
+        return points
 
     @staticmethod
     def _resolve_previous_close(history) -> float | None:

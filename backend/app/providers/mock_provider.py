@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from app.models.market import MarketQuote, MarketSnapshot, TrackedTicker
+from app.models.market import MarketHistoryPoint, MarketQuote, MarketSnapshot, TrackedTicker
 from app.providers.base import MarketDataProvider
 
 
@@ -37,3 +37,26 @@ class MockMarketDataProvider(MarketDataProvider):
             markets=markets,
             errors=[],
         )
+
+    async def fetch_history(
+        self,
+        ticker: TrackedTicker,
+        *,
+        period: str,
+        interval: str,
+    ) -> list[MarketHistoryPoint]:
+        now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+        base_price = 68.42 if ticker.code == "CL" else 3087.14
+        points: list[MarketHistoryPoint] = []
+
+        for index in range(78):
+            timestamp = now - timedelta(minutes=(77 - index) * 5)
+            wave = ((index % 12) - 6) * 0.18
+            points.append(
+                MarketHistoryPoint(
+                    timestamp=timestamp,
+                    price=round(base_price + wave, 2),
+                )
+            )
+
+        return points

@@ -60,6 +60,7 @@ Endpoints:
 
 - `GET /api/health`
 - `GET /api/markets`
+- `GET /api/markets/{code}/history`
 - `GET /api/providers`
 - `GET /api/sentiment/fear-greed`
 - `GET /api/tickers`
@@ -91,6 +92,12 @@ Current provider note:
 - The default gold instrument now uses `GC=F`
 - The backend writes latest quotes to Redis key `market:last:{code}`
 - The backend writes the previous completed 5-minute close to Redis key `market:ref:5m:prev_close:{code}`
+- The backend also seeds `1d / 5m` chart history to Redis key `market:history:1d:5m:{code}`
+- Session-aware chart seeding defaults are:
+  - futures: `18:00` `America/New_York`
+  - crypto: `00:00` `UTC`
+  - stocks: `04:00` `America/New_York` to include pre-market, regular session, post-market, and overnight context
+- These session defaults can be overridden later through ticker metadata
 
 Key backend folders:
 
@@ -130,6 +137,12 @@ Fear & Greed gauge:
 - Browser notifications must be allowed by the user
 - A rule triggers once when price crosses the threshold, then resets if price moves back across the threshold
 - The frontend still evaluates live trigger state in the browser against the websocket market stream
+
+## Chart seeding
+
+- Price panels now seed their `1D` line from `GET /api/markets/{code}/history`
+- The backend fetches raw `5d / 5m` intraday data from `yfinance`, applies an asset-aware session start, and returns the active session window
+- The frontend then merges websocket prices into the latest 5-minute bucket so the chart stays live after the initial seed
 
 Key frontend folders:
 

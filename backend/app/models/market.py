@@ -62,6 +62,28 @@ class CreateAlertRuleRequest(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class MarketHistoryPoint(BaseModel):
+    timestamp: datetime
+    price: float
+
+
+class MarketHistoryResponse(BaseModel):
+    code: str
+    symbol: str
+    name: str
+    range: str = "1d"
+    interval: str = "5m"
+    asset_type: str
+    session_timezone: str
+    session_start: str
+    points: list[MarketHistoryPoint] = Field(default_factory=list)
+    high: float | None = None
+    low: float | None = None
+    current: float | None = None
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
+
+
 class MarketSnapshot(BaseModel):
     updated_at: datetime | None = None
     tracked_tickers: list[TrackedTicker] = Field(default_factory=list)

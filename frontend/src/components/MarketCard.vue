@@ -1,9 +1,11 @@
 <script setup>
+import * as echarts from "echarts/core";
+import { GridComponent, TooltipComponent } from "echarts/components";
+import { LineChart } from "echarts/charts";
+import { CanvasRenderer } from "echarts/renderers";
 import { computed, nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
 
-const CHART_HEIGHT = 44;
-const TOP_RIM_Y = 0.5;
-const BOTTOM_RIM_Y = CHART_HEIGHT - 0.5;
+echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer]);
 
 const props = defineProps({
   card: {
@@ -25,6 +27,10 @@ const expanded = ref(false);
 const actionMenuOpen = ref(false);
 const actionMenuRef = ref(null);
 const collapsedControlsRef = ref(null);
+const chartCanvasRef = ref(null);
+
+let chartInstance = null;
+let resizeObserver = null;
 
 function toggleExpanded() {
   expanded.value = !expanded.value;
@@ -103,46 +109,18 @@ function formatCollapsedPriceParts(value) {
   };
 }
 
-const sparklinePoints = computed(() => {
-  const values = chartValues.value;
-  if (values.length < 2) return "";
-
-  const width = 100;
-  const height = CHART_HEIGHT;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-
-  return values
-    .map((value, index) => {
-      const x = (index / (values.length - 1)) * width;
-      const y = height - ((value - min) / range) * height;
-      return `${x.toFixed(2)},${y.toFixed(2)}`;
-    })
-    .join(" ");
-});
-
-const sparklineAreaPoints = computed(() => {
-  const points = sparklinePoints.value;
-  if (!points) return "";
-
-  return `0,${CHART_HEIGHT} ${points} 100,${CHART_HEIGHT}`;
+const chartPlotPoints = computed(() => {
+  const history = props.card.history ?? [];
+  return history
+    .map((point) => ({
+      timestamp: point?.timestamp ?? null,
+      price: Number(point?.price),
+    }))
+    .filter((point) => Number.isFinite(point.price));
 });
 
 const chartValues = computed(() => {
-  const history = props.card.history ?? [];
-  const current = props.card.data?.price;
-  const values = [...history];
-
-  if (typeof current === "number" && values.at(-1) !== current) {
-    values.push(current);
-  }
-
-  return values;
-});
-
-const referenceLineY = computed(() => {
-  return valueToY(props.card.data?.previous_close);
+  return chartPlotPoints.value.map((point) => point.price);
 });
 
 const collapsedPriceTone = computed(() => {
@@ -171,30 +149,181 @@ const intradayLow = computed(() => {
   if (!values.length) return null;
   return Math.min(...values);
 });
+const marketStateTone = computed(() => {
+  return props.card.data?.market_state === "LIVE" ? "metric-live" : "metric-offline";
+});
 
-const currentLineY = computed(() => CHART_HEIGHT / 2);
-const highLineY = computed(() => (intradayHigh.value === null ? null : TOP_RIM_Y));
-const lowLineY = computed(() => (intradayLow.value === null ? null : BOTTOM_RIM_Y));
-function valueToY(value) {
-  const values = chartValues.value;
+function formatHoverTime(value) {
+  if (!value) return "--";
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
 
-  if (values.length < 2 || typeof value !== "number") return null;
+function initChart() {
+  if (!chartCanvasRef.value || chartInstance) return;
 
-  const min = Math.min(...values, value);
-  const max = Math.max(...values, value);
-  const range = max - min || 1;
+  chartInstance = echarts.init(chartCanvasRef.value, null, {
+    renderer: "canvas",
+  });
+  updateChart();
 
-  return CHART_HEIGHT - ((value - min) / range) * CHART_HEIGHT;
+  if (typeof ResizeObserver !== "undefined") {
+    resizeObserver = new ResizeObserver(() => {
+      chartInstance?.resize();
+    });
+    resizeObserver.observe(chartCanvasRef.value);
+  }
+}
+
+function updateChart() {
+  if (!chartInstance) return;
+
+  const points = chartPlotPoints.value;
+  if (points.length < 2) {
+    chartInstance.clear();
+    return;
+  }
+
+  const previousClose = props.card.data?.previous_close;
+  const lastPrice = props.card.data?.price ?? points.at(-1)?.price ?? null;
+
+  chartInstance.setOption(
+    {
+      animation: false,
+      grid: {
+        left: 0,
+        right: 0,
+        top: 2,
+        bottom: 0,
+        containLabel: false,
+      },
+      tooltip: {
+        trigger: "axis",
+        confine: true,
+        appendToBody: false,
+        backgroundColor: "rgba(255,255,255,0.98)",
+        borderColor: "rgba(91, 107, 134, 0.18)",
+        borderWidth: 1,
+        padding: [8, 10],
+        textStyle: {
+          color: "#182230",
+          fontSize: 12,
+        },
+        extraCssText:
+          "box-shadow: 0 14px 28px rgba(58, 76, 102, 0.16); border-radius: 12px;",
+        formatter(params) {
+          const item = Array.isArray(params) ? params[0] : params;
+          const point = points[item.dataIndex];
+          return `
+            <div style="display:grid;gap:4px;">
+              <strong style="font-size:13px;">${formatPrice(point?.price)}</strong>
+              <span style="color:#627085;font-size:11px;">${formatHoverTime(point?.timestamp)}</span>
+            </div>
+          `;
+        },
+        axisPointer: {
+          type: "line",
+          snap: true,
+          lineStyle: {
+            color: "rgba(24, 34, 48, 0.22)",
+            width: 1,
+            type: "dashed",
+          },
+        },
+      },
+      xAxis: {
+        type: "category",
+        boundaryGap: false,
+        data: points.map((point) => point.timestamp),
+        show: false,
+      },
+      yAxis: {
+        type: "value",
+        show: false,
+        scale: true,
+      },
+      series: [
+        {
+          type: "line",
+          data: points.map((point) => point.price),
+          smooth: false,
+          symbol: "none",
+          lineStyle: {
+            color: "#1565c0",
+            width: 1.1,
+          },
+          areaStyle: {
+            color: {
+              type: "linear",
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                { offset: 0, color: "rgba(62, 166, 255, 0.16)" },
+                { offset: 1, color: "rgba(62, 166, 255, 0)" },
+              ],
+            },
+          },
+          markLine: {
+            symbol: "none",
+            silent: true,
+            animation: false,
+            label: {
+              show: false,
+            },
+            lineStyle: {
+              width: 1,
+            },
+            data: [
+              ...(typeof previousClose === "number"
+                ? [
+                    {
+                      yAxis: previousClose,
+                      lineStyle: {
+                        color: "rgba(95, 113, 138, 0.3)",
+                        type: "dashed",
+                      },
+                    },
+                  ]
+                : []),
+              ...(typeof lastPrice === "number"
+                ? [
+                    {
+                      yAxis: lastPrice,
+                      lineStyle: {
+                        color: "rgba(21, 101, 192, 0.26)",
+                        type: "dashed",
+                      },
+                    },
+                  ]
+                : []),
+            ],
+          },
+        },
+      ],
+    },
+    true,
+  );
 }
 
 onMounted(() => {
   document.addEventListener("click", handleOutsideClick);
   nextTick(syncCollapsedControlsWidth);
+  nextTick(initChart);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleOutsideClick);
   nextTick(syncCollapsedControlsWidth);
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+  chartInstance?.dispose();
+  chartInstance = null;
 });
 
 onUpdated(() => {
@@ -203,7 +332,22 @@ onUpdated(() => {
 
 watch(expanded, () => {
   nextTick(syncCollapsedControlsWidth);
+  if (expanded.value) {
+    nextTick(() => {
+      initChart();
+      chartInstance?.resize();
+      updateChart();
+    });
+  }
 });
+
+watch(
+  [chartPlotPoints, () => props.card.data?.previous_close, () => props.card.data?.price],
+  () => {
+    nextTick(updateChart);
+  },
+  { deep: true },
+);
 
 </script>
 
@@ -312,91 +456,40 @@ watch(expanded, () => {
     <div v-if="expanded">
       <div class="sparkline-shell">
         <div class="sparkline-head">
-          <span class="label">Price Line</span>
           <strong>1D</strong>
         </div>
         <div class="sparkline-frame">
-          <svg
-            v-if="sparklinePoints"
+          <div
+            v-if="chartPlotPoints.length > 1"
+            ref="chartCanvasRef"
             class="sparkline-chart"
-            viewBox="0 0 100 44"
-            preserveAspectRatio="none"
             aria-hidden="true"
-          >
-            <defs>
-              <linearGradient id="price-area-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="rgba(62, 166, 255, 0.16)" />
-                <stop offset="100%" stop-color="rgba(62, 166, 255, 0)" />
-              </linearGradient>
-            </defs>
-            <rect
-              v-if="currentLineY !== null && lowLineY !== null"
-              class="sparkline-band"
-              x="0"
-              width="100"
-              :y="currentLineY"
-              :height="Math.max(lowLineY - currentLineY, 0)"
-            />
-            <line
-              v-if="referenceLineY !== null"
-              class="sparkline-reference"
-              x1="0"
-              x2="100"
-              :y1="referenceLineY"
-              :y2="referenceLineY"
-            />
-            <line
-              v-if="currentLineY !== null"
-              class="sparkline-current-guide"
-              x1="0"
-              x2="100"
-              :y1="currentLineY"
-              :y2="currentLineY"
-            />
-            <line
-              v-if="highLineY !== null"
-              class="sparkline-guide"
-              x1="0"
-              x2="100"
-              :y1="highLineY"
-              :y2="highLineY"
-            />
-            <line
-              v-if="lowLineY !== null"
-              class="sparkline-guide"
-              x1="0"
-              x2="100"
-              :y1="lowLineY"
-              :y2="lowLineY"
-            />
-            <polygon class="sparkline-area" :points="sparklineAreaPoints" />
-            <polyline class="sparkline-stroke" :points="sparklinePoints" />
-          </svg>
+          ></div>
           <div v-if="card.data?.price != null" class="price-level price-level-current price-level-right-outer price-level-middle">
             C {{ formatPrice(card.data?.price) }}
           </div>
-          <div v-if="highLineY !== null" class="price-level price-level-high price-level-right-outer price-level-top">
+          <div v-if="intradayHigh !== null" class="price-level price-level-high price-level-right-outer price-level-top">
             H {{ formatPrice(intradayHigh) }}
           </div>
-          <div v-if="lowLineY !== null" class="price-level price-level-low price-level-right-outer price-level-bottom">
+          <div v-if="intradayLow !== null" class="price-level price-level-low price-level-right-outer price-level-bottom">
             L {{ formatPrice(intradayLow) }}
           </div>
-          <p v-else class="sparkline-empty">Waiting for enough price updates to draw the line.</p>
+          <p v-if="chartPlotPoints.length <= 1" class="sparkline-empty">Waiting for enough price updates to draw the line.</p>
         </div>
       </div>
 
       <div class="metrics">
         <div>
-          <span>Change</span>
+          <span>5m Change</span>
           <strong>{{ formatDelta(card.data?.change) }}</strong>
         </div>
         <div>
-          <span>Change %</span>
+          <span>5m Change %</span>
           <strong>{{ formatPercent(card.data?.change_percent) }}</strong>
         </div>
         <div>
           <span>State</span>
-          <strong>{{ card.data?.market_state ?? "--" }}</strong>
+          <strong :class="marketStateTone">{{ card.data?.market_state ?? "--" }}</strong>
         </div>
         <div>
           <span>Symbol</span>
