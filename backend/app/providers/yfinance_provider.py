@@ -91,7 +91,7 @@ class YFinanceMarketDataProvider(MarketDataProvider):
         )
         prev_5m_close, prev_5m_closed_at = self._resolve_previous_5m_close(history_5m)
         previous_close = self._resolve_previous_close(daily_history, latest_row)
-        price = float(latest_row["Close"])
+        price = self._resolve_live_price(instrument, latest_row)
         change = price - previous_close if previous_close is not None else None
         change_percent = (
             ((change / previous_close) * 100)
@@ -127,6 +127,24 @@ class YFinanceMarketDataProvider(MarketDataProvider):
                 "prev_5m_bar_closed_at": prev_5m_closed_at,
             },
         )
+
+    @staticmethod
+    def _resolve_live_price(instrument: yf.Ticker, latest_row) -> float:
+        fast_info = getattr(instrument, "fast_info", None)
+        if fast_info:
+            for key in ("lastPrice", "regularMarketPrice", "last_price"):
+                try:
+                    value = fast_info.get(key) if hasattr(fast_info, "get") else fast_info[key]
+                except Exception:  # noqa: BLE001
+                    value = None
+                if value is None:
+                    continue
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    continue
+
+        return float(latest_row["Close"])
 
     def _fetch_history(
         self,
