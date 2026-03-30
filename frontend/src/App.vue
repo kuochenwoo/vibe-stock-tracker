@@ -41,8 +41,13 @@ const displayCards = ref([]);
 const localClock = ref(new Date());
 const layoutVersion = ref(0);
 const fearGreedCollapsed = ref(false);
+const showTopRightClock = ref(true);
 
 let localClockTimer;
+
+function handleWindowScroll() {
+  showTopRightClock.value = window.scrollY < 48;
+}
 
 const drawerAlerts = computed(() =>
   alarmDrawerTicker.value
@@ -94,6 +99,124 @@ const daypart = computed(() => {
   return { icon: "☾", label: "Nighttime" };
 });
 
+const jstDateTime = computed(() =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(localClock.value),
+);
+
+function getNewYorkDateParts(date) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    weekday: "short",
+  });
+
+  const parts = Object.fromEntries(
+    formatter
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+    hour: Number(parts.hour),
+    minute: Number(parts.minute),
+    second: Number(parts.second),
+    weekday: parts.weekday,
+  };
+}
+
+function getOffsetMinutes(timeZone, date) {
+  const utcDate = new Date(date.toLocaleString("en-US", { timeZone: "UTC" }));
+  const zonedDate = new Date(date.toLocaleString("en-US", { timeZone }));
+  return Math.round((zonedDate.getTime() - utcDate.getTime()) / 60000);
+}
+
+function zonedTimeToUtc(timeZone, year, month, day, hour, minute = 0, second = 0) {
+  const utcGuess = Date.UTC(year, month - 1, day, hour, minute, second);
+  const offsetMinutes = getOffsetMinutes(timeZone, new Date(utcGuess));
+  return new Date(utcGuess - offsetMinutes * 60 * 1000);
+}
+
+const usMarketOpenCountdown = computed(() => {
+  const now = localClock.value;
+  const ny = getNewYorkDateParts(now);
+  const weekdayMap = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  const currentWeekday = weekdayMap[ny.weekday] ?? 0;
+  const marketOpenToday = zonedTimeToUtc(
+    "America/New_York",
+    ny.year,
+    ny.month,
+    ny.day,
+    9,
+    30,
+    0,
+  );
+  const marketCloseToday = zonedTimeToUtc(
+    "America/New_York",
+    ny.year,
+    ny.month,
+    ny.day,
+    16,
+    0,
+    0,
+  );
+
+  let targetOpen = marketOpenToday;
+
+  if (currentWeekday === 0) {
+    targetOpen = zonedTimeToUtc("America/New_York", ny.year, ny.month, ny.day + 1, 9, 30, 0);
+  } else if (currentWeekday === 6) {
+    targetOpen = zonedTimeToUtc("America/New_York", ny.year, ny.month, ny.day + 2, 9, 30, 0);
+  } else if (now >= marketOpenToday && now < marketCloseToday) {
+    return "US stock market open now";
+  } else if (now >= marketCloseToday) {
+    const daysUntilNextOpen = currentWeekday === 5 ? 3 : 1;
+    targetOpen = zonedTimeToUtc(
+      "America/New_York",
+      ny.year,
+      ny.month,
+      ny.day + daysUntilNextOpen,
+      9,
+      30,
+      0,
+    );
+  }
+
+  const diffMs = Math.max(targetOpen.getTime() - now.getTime(), 0);
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return `US open in ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+});
+
 function formatTime(value) {
   if (!value) return "--";
   return new Intl.DateTimeFormat(undefined, {
@@ -122,19 +245,31 @@ watch(
 onMounted(() => {
   localClockTimer = window.setInterval(() => {
     localClock.value = new Date();
-  }, 60 * 1000);
+  }, 1000);
+  handleWindowScroll();
+  window.addEventListener("scroll", handleWindowScroll, { passive: true });
 });
 
 onBeforeUnmount(() => {
   if (localClockTimer) {
     window.clearInterval(localClockTimer);
   }
+  window.removeEventListener("scroll", handleWindowScroll);
 });
 </script>
 
 <template>
   <div class="page">
-    <div class="localtime-indicator" :title="`Local time: ${daypart.label}`" aria-label="Local time daypart">
+    <div
+      class="localtime-indicator"
+      :class="{ 'localtime-indicator-hidden': !showTopRightClock }"
+      :title="`Local time: ${daypart.label} | JST ${jstDateTime}`"
+      aria-label="Local time daypart"
+    >
+      <div class="localtime-meta">
+        <span class="jst-datetime">JST {{ jstDateTime }}</span>
+        <div class="market-open-countdown">{{ usMarketOpenCountdown }}</div>
+      </div>
       <span class="localtime-icon" :class="`localtime-${daypart.label.toLowerCase()}`">{{ daypart.icon }}</span>
     </div>
 
