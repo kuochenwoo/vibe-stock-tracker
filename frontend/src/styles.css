@@ -906,9 +906,12 @@ h2 {
 }
 
 .headline-ribbon {
-  position: relative;
-  z-index: 12;
-  margin-top: auto;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  margin-top: 0;
   border: 1px solid rgba(91, 107, 134, 0.14);
   border-radius: 0;
   background:
