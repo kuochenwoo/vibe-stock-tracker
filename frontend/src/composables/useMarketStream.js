@@ -52,6 +52,7 @@ export function useMarketStream() {
       subtitle: ticker.symbol,
       data: snapshot.value.markets[ticker.code] ?? null,
       history: priceHistory.value[ticker.code]?.points ?? [],
+      historyStartedAt: priceHistory.value[ticker.code]?.startedAt ?? null,
     })),
   );
 
@@ -284,6 +285,7 @@ export function useMarketStream() {
           timestamp: point.timestamp,
           price: Number(point.price),
         })),
+        startedAt: history.started_at ?? history.points[0]?.timestamp ?? null,
       };
     }
     priceHistory.value = nextHistory;
@@ -333,6 +335,7 @@ function mergeLivePoint(history, point) {
 
   return {
     points: points.slice(-HISTORY_POINT_LIMIT),
+    startedAt: history.startedAt ?? points[0]?.timestamp ?? null,
   };
 }
 

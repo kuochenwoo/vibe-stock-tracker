@@ -79,7 +79,9 @@ const macroItems = computed(() =>
         symbol: ticker.symbol,
         name: ticker.name,
         price: quote?.price ?? null,
+        change: quote?.change ?? null,
         change_percent: quote?.change_percent ?? null,
+        previous_close: quote?.previous_close ?? null,
       };
     })
     .filter((item) => item.price != null || item.change_percent != null),

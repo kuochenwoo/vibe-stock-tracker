@@ -40,9 +40,11 @@ const actionMenuOpen = ref(false);
 const actionMenuRef = ref(null);
 const collapsedControlsRef = ref(null);
 const chartCanvasRef = ref(null);
+const backgroundFlashTone = ref("");
 
 let chartInstance = null;
 let resizeObserver = null;
+let backgroundFlashTimer = null;
 const ACTION_MENU_EVENT = "market-card-action-menu-open";
 
 function toggleExpanded() {
@@ -167,22 +169,53 @@ const chartPlotPoints = computed(() => {
     .filter((point) => Number.isFinite(point.price));
 });
 
+const chartWindowStart = computed(() => {
+  const explicitStart = props.card.historyStartedAt;
+  if (explicitStart) {
+    const parsed = new Date(explicitStart);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+
+  const firstPoint = chartPlotPoints.value[0]?.timestamp;
+  if (firstPoint) {
+    const parsed = new Date(firstPoint);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+
+  return null;
+});
+
+const chartWindowEnd = computed(() => {
+  if (!chartWindowStart.value) return null;
+  return new Date(chartWindowStart.value.getTime() + 24 * 60 * 60 * 1000);
+});
+
 const chartValues = computed(() => {
   return chartPlotPoints.value.map((point) => point.price);
 });
 
-const collapsedPriceTone = computed(() => {
-  const price = props.card.data?.price;
-  const previousClose = props.card.data?.previous_close;
+const priceTone = computed(() => {
+  const fiveMinuteChange = props.card.data?.five_min_change;
 
-  if (typeof price !== "number" || typeof previousClose !== "number") {
+  if (typeof fiveMinuteChange !== "number") {
     return "";
   }
 
-  if (price > previousClose) return "price-up";
-  if (price < previousClose) return "price-down";
+  if (fiveMinuteChange > 0) return "price-up";
+  if (fiveMinuteChange < 0) return "price-down";
   return "price-flat";
 });
+
+function toneFromFiveMinuteChange(value) {
+  if (typeof value !== "number") return "";
+  if (value > 0) return "up";
+  if (value < 0) return "down";
+  return "";
+}
 
 const collapsedPriceParts = computed(() => formatCollapsedPriceParts(props.card.data?.price));
 
@@ -240,13 +273,15 @@ function updateChart() {
   if (!chartInstance) return;
 
   const points = chartPlotPoints.value;
-  if (points.length < 2) {
+  if (points.length === 0) {
     chartInstance.clear();
     return;
   }
 
   const previousClose = props.card.data?.previous_close;
   const lastPrice = props.card.data?.price ?? points.at(-1)?.price ?? null;
+  const windowStart = chartWindowStart.value;
+  const windowEnd = chartWindowEnd.value;
 
   chartInstance.setOption(
     {
@@ -293,9 +328,9 @@ function updateChart() {
         },
       },
       xAxis: {
-        type: "category",
-        boundaryGap: false,
-        data: points.map((point) => point.timestamp),
+        type: "time",
+        min: windowStart ? windowStart.getTime() : undefined,
+        max: windowEnd ? windowEnd.getTime() : undefined,
         show: false,
       },
       yAxis: {
@@ -306,9 +341,11 @@ function updateChart() {
       series: [
         {
           type: "line",
-          data: points.map((point) => point.price),
+          data: points.map((point) => [new Date(point.timestamp).getTime(), point.price]),
           smooth: false,
-          symbol: "none",
+          symbol: "circle",
+          showSymbol: points.length === 1,
+          symbolSize: 4,
           lineStyle: {
             color: "#1565c0",
             width: 1.1,
@@ -378,6 +415,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleOutsideClick);
   window.removeEventListener(ACTION_MENU_EVENT, handleOtherMenuOpened);
+  if (backgroundFlashTimer) {
+    window.clearTimeout(backgroundFlashTimer);
+  }
   nextTick(syncCollapsedControlsWidth);
   disposeChart();
   emit("expanded-change", {
@@ -422,10 +462,42 @@ watch(
   { deep: true },
 );
 
+watch(
+  () => props.card.data?.price,
+  (nextPrice, previousPrice) => {
+    if (typeof nextPrice !== "number" || typeof previousPrice !== "number" || nextPrice === previousPrice) {
+      return;
+    }
+
+    const tone = toneFromFiveMinuteChange(props.card.data?.five_min_change);
+    if (!tone) {
+      backgroundFlashTone.value = "";
+      return;
+    }
+
+    backgroundFlashTone.value = `market-card-flash-${tone}`;
+    if (backgroundFlashTimer) {
+      window.clearTimeout(backgroundFlashTimer);
+    }
+    backgroundFlashTimer = window.setTimeout(() => {
+      backgroundFlashTone.value = "";
+    }, 5000);
+  },
+);
+
 </script>
 
 <template>
-  <article :class="['market-card', { 'market-card-menu-open': actionMenuOpen, 'market-card-removing': isDeleting }]">
+  <article
+    :class="[
+      'market-card',
+      backgroundFlashTone,
+      {
+        'market-card-menu-open': actionMenuOpen,
+        'market-card-removing': isDeleting,
+      },
+    ]"
+  >
     <div v-if="expanded">
       <div class="card-head">
         <div>
@@ -448,7 +520,7 @@ watch(
           <h2>{{ card.title }}</h2>
         </div>
         <div class="card-head-actions">
-          <span class="badge">{{ card.code }}</span>
+          <span :class="['badge', priceTone]">{{ card.code }}</span>
           <div ref="actionMenuRef" class="card-action-menu">
             <button class="action-btn" type="button" aria-label="Open actions menu" @click.stop="toggleActionMenu">...</button>
             <div
@@ -476,7 +548,8 @@ watch(
       </div>
 
       <div class="price-row">
-        <p class="price">{{ formatPrice(card.data?.price) }}</p>
+        <p :class="['price', priceTone]">{{ formatPrice(card.data?.price) }}</p>
+        <span :class="['price-percent-inline', priceTone]">{{ formatPercent(card.data?.change_percent) }}</span>
       </div>
 
       <button
@@ -516,12 +589,12 @@ watch(
           <h2>{{ card.title }}</h2>
         </div>
       </div>
-      <p :class="['price', 'price-inline', collapsedPriceTone]">
+      <p :class="['price', 'price-inline', priceTone]">
         <span class="price-inline-integer">{{ collapsedPriceParts.integer }}</span>
         <span class="price-inline-decimal">{{ collapsedPriceParts.decimal }}</span>
       </p>
       <div ref="collapsedControlsRef" class="card-collapsed-controls">
-        <span class="badge badge-collapsed">{{ card.code }}</span>
+        <span :class="['badge', 'badge-collapsed', priceTone]">{{ card.code }}</span>
         <div ref="actionMenuRef" class="card-action-menu card-action-menu-collapsed">
           <button class="action-btn" type="button" aria-label="Open actions menu" @click.stop="toggleActionMenu">...</button>
           <div
@@ -555,7 +628,7 @@ watch(
         </div>
         <div class="sparkline-frame">
           <div
-            v-if="chartPlotPoints.length > 1"
+            v-if="chartPlotPoints.length > 0"
             ref="chartCanvasRef"
             class="sparkline-chart"
             aria-hidden="true"
@@ -569,31 +642,16 @@ watch(
           <div v-if="intradayLow !== null" class="price-level price-level-low price-level-right-outer price-level-bottom">
             L {{ formatPrice(intradayLow) }}
           </div>
-          <p v-if="chartPlotPoints.length <= 1" class="sparkline-empty">Waiting for enough price updates to draw the line.</p>
+          <p v-if="chartPlotPoints.length === 0" class="sparkline-empty">Waiting for price history.</p>
         </div>
       </div>
 
-      <div class="metrics">
-        <div>
-          <span>5m Change</span>
-          <strong>{{ formatDelta(card.data?.five_min_change) }}</strong>
-        </div>
-        <div>
-          <span>5m Change %</span>
-          <strong>{{ formatPercent(card.data?.five_min_change_percent) }}</strong>
-        </div>
-        <div>
-          <span>State</span>
-          <strong :class="marketStateTone">{{ card.data?.market_state ?? "--" }}</strong>
-        </div>
-        <div>
-          <span>Symbol</span>
-          <strong>{{ card.data?.symbol ?? "--" }}</strong>
-        </div>
-        <div>
-          <span>Source</span>
-          <strong>{{ card.data?.source ?? "--" }}</strong>
-        </div>
+      <div class="metrics-inline">
+        <span><span class="metrics-label">5m</span> <strong>{{ formatDelta(card.data?.five_min_change) }}</strong></span>
+        <span><span class="metrics-label">5m %</span> <strong>{{ formatPercent(card.data?.five_min_change_percent) }}</strong></span>
+        <span><span class="metrics-label">Prev Close</span> <strong>{{ formatPrice(card.data?.previous_close) }}</strong></span>
+        <span><span class="metrics-label">State</span> <strong :class="marketStateTone">{{ card.data?.market_state ?? "--" }}</strong></span>
+        <span><span class="metrics-label">Source</span> <strong>{{ card.data?.source ?? "--" }}</strong></span>
       </div>
 
       <p v-if="card.data?.metadata?.fallback_symbol_used" class="provider-note">
