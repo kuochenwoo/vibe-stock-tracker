@@ -131,3 +131,28 @@ The project now has a standalone Postman template that matches the current API a
 
 ### Reason
 These changes were made to keep API testing artifacts aligned with backend route changes instead of letting the API contract drift.
+
+## 2026-03-30 09:15:25
+
+### Change
+Created a reusable project skill for end-of-change delivery steps.
+
+### STAR
+
+#### Situation
+The project had established delivery rules for updating `CHANGELOG.md`, keeping `postman_collection.json` aligned with endpoint changes, and finishing work with `git add`, `git commit`, and `git push`, but those rules were only in conversation history.
+
+#### Task
+Package those recurring delivery requirements into a reusable skill that can be invoked consistently for future work in this repository.
+
+#### Action
+- Created the repo skill at [SKILL.md](/Users/guozhen_wu/Documents/vibe-code-test/skills/change-delivery-workflow/SKILL.md).
+- Added UI metadata at [openai.yaml](/Users/guozhen_wu/Documents/vibe-code-test/skills/change-delivery-workflow/agents/openai.yaml).
+- Wrote workflow instructions covering changelog updates, Postman maintenance, and non-interactive git delivery.
+- Validated the skill with the skill validator.
+
+#### Result
+The repository now includes a reusable skill that captures the expected delivery workflow for future changes instead of relying on ad hoc reminders.
+
+### Reason
+These changes were made to turn the repeated end-of-change process into a durable project skill that can be reused consistently.
