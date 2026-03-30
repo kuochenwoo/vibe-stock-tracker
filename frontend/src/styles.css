@@ -152,7 +152,7 @@ h1 {
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-top: 18px;
 }
@@ -166,6 +166,12 @@ h1 {
 .metrics strong {
   display: block;
   margin-top: 6px;
+}
+
+.provider-note {
+  margin-top: 14px;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .alert-form {
@@ -233,6 +239,11 @@ h1 {
 .alert-copy,
 .empty-state {
   color: #d3dfdd;
+}
+
+.error-text {
+  margin-top: 12px;
+  color: #ffd1ca;
 }
 
 .errors-panel {

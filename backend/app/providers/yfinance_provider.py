@@ -1,0 +1,82 @@
+import asyncio
+from datetime import datetime, timezone
+
+import yfinance as yf
+
+from app.core.config import Settings
+from app.models.market import MarketQuote, MarketSnapshot, TrackedTicker
+from app.providers.base import MarketDataProvider
+
+
+class YFinanceMarketDataProvider(MarketDataProvider):
+    provider_name = "yfinance"
+
+    def __init__(self, settings: Settings) -> None:
+        self.settings = settings
+
+    async def fetch_snapshot(self, tickers: list[TrackedTicker]) -> MarketSnapshot:
+        markets: dict[str, MarketQuote] = {}
+        errors: list[str] = []
+
+        for ticker in tickers:
+            try:
+                quote = await asyncio.to_thread(self._fetch_quote, ticker)
+                markets[ticker.code] = quote
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{ticker.code}: {type(exc).__name__}: {exc}")
+
+        return MarketSnapshot(
+            updated_at=datetime.now(timezone.utc),
+            tracked_tickers=tickers,
+            markets=markets,
+            errors=errors,
+        )
+
+    def _fetch_quote(self, ticker: TrackedTicker) -> MarketQuote:
+        instrument = yf.Ticker(ticker.symbol)
+        history = instrument.history(
+            period="2d",
+            interval="1m",
+            auto_adjust=False,
+            prepost=True,
+        )
+        if history.empty:
+            raise ValueError(f"No market data returned for {ticker.symbol}")
+
+        latest_row = history.dropna(subset=["Close"]).iloc[-1]
+        previous_close = self._resolve_previous_close(history)
+        price = float(latest_row["Close"])
+        change = price - previous_close if previous_close is not None else None
+        change_percent = (
+            ((change / previous_close) * 100)
+            if change is not None and previous_close not in (None, 0)
+            else None
+        )
+
+        return MarketQuote(
+            code=ticker.code,
+            symbol=ticker.symbol,
+            name=ticker.name,
+            price=price,
+            currency="USD",
+            change=change,
+            change_percent=change_percent,
+            previous_close=previous_close,
+            market_state="LIVE",
+            source=self.provider_name,
+            metadata={
+                "last_bar_time": latest_row.name.to_pydatetime()
+                .astimezone(timezone.utc)
+                .isoformat(),
+                "requested_symbol": ticker.symbol,
+            },
+        )
+
+    @staticmethod
+    def _resolve_previous_close(history) -> float | None:
+        closes = history["Close"].dropna()
+        if closes.empty:
+            return None
+        if len(closes) == 1:
+            return float(closes.iloc[0])
+        return float(closes.iloc[-2])
