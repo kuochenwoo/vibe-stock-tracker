@@ -1,10 +1,21 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
+from typing import Annotated
 
-from app.api.dependencies import alert_service, market_service, moving_average_service, preferences_service, provider, ticker_service
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+
+from app.api.dependencies import (
+    alert_service,
+    get_market_history_use_case,
+    get_moving_averages_use_case,
+    market_service,
+    preferences_service,
+    provider,
+    ticker_service,
+)
 from app.models.market import (
     AlertRule,
     CreateTrackedTickerRequest,
     CreateAlertRuleRequest,
+    MarketHistoryQuery,
     MovingAverageSnapshot,
     MarketHistoryResponse,
     MarketSnapshot,
@@ -27,10 +38,10 @@ async def get_markets() -> MarketSnapshot:
 @router.get("/markets/{code}/history", response_model=MarketHistoryResponse)
 async def get_market_history(
     code: str,
-    range: str = Query("1d", pattern="^(1d|1y)$"),
+    query: Annotated[MarketHistoryQuery, Depends()],
 ) -> MarketHistoryResponse:
     try:
-        return await market_service.get_history(code, range_value=range)
+        return await get_market_history_use_case.execute(code, range_value=query.range)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
@@ -38,7 +49,7 @@ async def get_market_history(
 @router.get("/markets/{code}/moving-averages", response_model=MovingAverageSnapshot)
 async def get_market_moving_averages(code: str) -> MovingAverageSnapshot:
     try:
-        return await moving_average_service.get_snapshot(code)
+        return await get_moving_averages_use_case.execute(code)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 

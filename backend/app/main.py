@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
+import warnings
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pandas.errors import Pandas4Warning
 
 from app.api.dependencies import market_cache, market_poller
 from app.api.routes.health import router as health_router
@@ -10,6 +12,12 @@ from app.api.routes.markets import router as markets_router
 from app.api.routes.social import router as social_router
 from app.api.routes.sentiment import router as sentiment_router
 from app.core.config import get_settings
+
+warnings.filterwarnings(
+    "ignore",
+    category=Pandas4Warning,
+    module=r"yfinance\..*",
+)
 
 settings = get_settings()
 

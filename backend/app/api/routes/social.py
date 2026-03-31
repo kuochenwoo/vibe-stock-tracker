@@ -1,13 +1,9 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, status
 
 from app.api.dependencies import truth_social_service, wire_news_service
-from app.core.constants import (
-    TRUTH_SOCIAL_DEFAULT_LIMIT,
-    TRUTH_SOCIAL_MAX_LIMIT,
-    WIRE_NEWS_DEFAULT_LIMIT,
-    WIRE_NEWS_MAX_LIMIT,
-)
+from app.core.constants import TRUTH_SOCIAL_DEFAULT_LIMIT, WIRE_NEWS_DEFAULT_LIMIT
 from app.models.news import NewsFeedResponse
+from app.models.market import TruthSocialLimitQuery, WireNewsLimitQuery
 from app.models.social import SocialFeedResponse
 
 router = APIRouter(tags=["social"])
@@ -15,7 +11,7 @@ router = APIRouter(tags=["social"])
 
 @router.get("/social/truth", response_model=SocialFeedResponse)
 async def get_truth_social_feed(
-    limit: int = Query(TRUTH_SOCIAL_DEFAULT_LIMIT, ge=1, le=TRUTH_SOCIAL_MAX_LIMIT),
+    limit: TruthSocialLimitQuery = TRUTH_SOCIAL_DEFAULT_LIMIT,
 ) -> SocialFeedResponse:
     try:
         return await truth_social_service.get_latest_posts(limit=limit)
@@ -28,7 +24,7 @@ async def get_truth_social_feed(
 
 @router.get("/news/wire", response_model=NewsFeedResponse)
 async def get_wire_news_feed(
-    limit: int = Query(WIRE_NEWS_DEFAULT_LIMIT, ge=1, le=WIRE_NEWS_MAX_LIMIT),
+    limit: WireNewsLimitQuery = WIRE_NEWS_DEFAULT_LIMIT,
 ) -> NewsFeedResponse:
     try:
         return await wire_news_service.get_latest_items(limit=limit)

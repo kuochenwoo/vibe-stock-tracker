@@ -1,7 +1,17 @@
 from datetime import date, datetime
-from typing import Any
+from typing import Annotated, Any, Literal
 
+from fastapi import Query
 from pydantic import BaseModel, Field
+
+from app.core.constants import (
+    MARKET_HISTORY_DEFAULT_RANGE,
+    MARKET_HISTORY_YEAR_RANGE,
+    TRUTH_SOCIAL_DEFAULT_LIMIT,
+    TRUTH_SOCIAL_MAX_LIMIT,
+    WIRE_NEWS_DEFAULT_LIMIT,
+    WIRE_NEWS_MAX_LIMIT,
+)
 
 
 class MarketQuote(BaseModel):
@@ -106,6 +116,14 @@ class MarketHistoryResponse(BaseModel):
     current: float | None = None
     started_at: datetime | None = None
     ended_at: datetime | None = None
+
+
+class MarketHistoryQuery(BaseModel):
+    range: Literal["1d", "1y"] = MARKET_HISTORY_DEFAULT_RANGE
+
+
+WireNewsLimitQuery = Annotated[int, Query(ge=1, le=WIRE_NEWS_MAX_LIMIT)]
+TruthSocialLimitQuery = Annotated[int, Query(ge=1, le=TRUTH_SOCIAL_MAX_LIMIT)]
 
 
 class MarketSnapshot(BaseModel):

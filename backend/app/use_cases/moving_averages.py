@@ -1,11 +1,15 @@
+from __future__ import annotations
+
+from app.core.constants import MARKET_HISTORY_YEAR_REFRESH_PERIOD, MARKET_HISTORY_YEAR_SEED_PERIOD
 from app.models.market import MovingAverageSnapshot
 from app.providers.base import MarketDataProvider
 from app.repositories.protocols import DailyBarRepositoryProtocol, TickerRepositoryProtocol
 
 
-class MovingAverageService:
+class GetMovingAveragesUseCase:
     def __init__(
         self,
+        *,
         provider: MarketDataProvider,
         ticker_repository: TickerRepositoryProtocol,
         daily_bar_repository: DailyBarRepositoryProtocol,
@@ -14,13 +18,18 @@ class MovingAverageService:
         self.ticker_repository = ticker_repository
         self.daily_bar_repository = daily_bar_repository
 
-    async def get_snapshot(self, code: str) -> MovingAverageSnapshot:
+    async def execute(self, code: str) -> MovingAverageSnapshot:
         ticker = self._get_ticker(code)
-        bars = await self.provider.fetch_daily_bars(ticker, period="2y")
-        self.daily_bar_repository.upsert_bars(ticker.code, bars)
+        latest_trading_date = self.daily_bar_repository.get_latest_trading_date(ticker.code)
+        if latest_trading_date is None:
+            bars = await self.provider.fetch_daily_bars(ticker, period=MARKET_HISTORY_YEAR_SEED_PERIOD)
+            self.daily_bar_repository.upsert_bars(ticker.code, bars)
+        else:
+            bars = await self.provider.fetch_daily_bars(ticker, period=MARKET_HISTORY_YEAR_REFRESH_PERIOD)
+            self.daily_bar_repository.upsert_bars(ticker.code, bars)
+
         recent_bars = list(reversed(self.daily_bar_repository.list_recent_bars(ticker.code, 60)))
         closes = [bar.close for bar in recent_bars]
-
         return MovingAverageSnapshot(
             code=ticker.code,
             symbol=ticker.symbol,

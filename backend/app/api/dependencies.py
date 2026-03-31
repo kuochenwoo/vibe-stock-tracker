@@ -15,11 +15,12 @@ from app.services.fear_greed_service import FearGreedService
 from app.services.market_poller import MarketPoller
 from app.services.market_service import MarketService
 from app.services.market_state import MarketStateStore
-from app.services.moving_average_service import MovingAverageService
 from app.services.preferences_service import PreferencesService
 from app.services.ticker_service import TickerService
 from app.services.truth_social_service import TruthSocialService
 from app.services.wire_news_service import WireNewsService
+from app.use_cases.market_history import GetMarketHistoryUseCase
+from app.use_cases.moving_averages import GetMovingAveragesUseCase
 
 settings = get_settings()
 state_store = MarketStateStore()
@@ -42,7 +43,13 @@ preferences_service = PreferencesService(
     ticker_repository=ticker_repository,
 )
 fear_greed_service = FearGreedService()
-moving_average_service = MovingAverageService(
+get_market_history_use_case = GetMarketHistoryUseCase(
+    provider=provider,
+    cache=market_cache,
+    ticker_repository=ticker_repository,
+    daily_bar_repository=daily_bar_repository,
+)
+get_moving_averages_use_case = GetMovingAveragesUseCase(
     provider=provider,
     ticker_repository=ticker_repository,
     daily_bar_repository=daily_bar_repository,
@@ -81,7 +88,6 @@ market_service = MarketService(
     state_store=state_store,
     ticker_service=ticker_service,
     cache=market_cache,
-    daily_bar_repository=daily_bar_repository,
     macro_tickers=[
         TrackedTicker(
             code=item["code"],
