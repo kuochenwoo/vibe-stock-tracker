@@ -31,6 +31,28 @@ class AlertRepository:
 
         return [_row_to_alert(row) for row in rows]
 
+    def get(self, alert_id: str) -> AlertRule | None:
+        with self.database.connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT
+                        id::text AS id,
+                        ticker_code::text AS market,
+                        direction,
+                        threshold::float8 AS value,
+                        is_enabled AS enabled,
+                        created_at,
+                        metadata
+                    FROM alert_rules
+                    WHERE id = %s::uuid
+                    """,
+                    (alert_id,),
+                )
+                row = cursor.fetchone()
+
+        return _row_to_alert(row) if row else None
+
     def add(self, alert: AlertRule) -> list[AlertRule]:
         with self.database.connect() as connection:
             with connection.cursor() as cursor:
@@ -76,6 +98,61 @@ class AlertRepository:
             connection.commit()
 
         return self.list_all()
+
+    def record_history(
+        self,
+        id: str,
+        alert_rule_id: str | None,
+        market: str,
+        direction: str,
+        threshold: float,
+        price: float,
+    ) -> None:
+        with self.database.connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO alert_history (
+                        id,
+                        alert_rule_id,
+                        ticker_code,
+                        direction,
+                        threshold,
+                        price
+                    )
+                    VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s)
+                    """,
+                    (
+                        id,
+                        alert_rule_id,
+                        market,
+                        direction,
+                        threshold,
+                        price,
+                    ),
+                )
+            connection.commit()
+
+    def list_history(self, limit: int = 50) -> list[dict]:
+        with self.database.connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT
+                        id::text AS id,
+                        alert_rule_id::text AS alert_rule_id,
+                        ticker_code::text AS market,
+                        direction,
+                        threshold::float8 AS threshold,
+                        price::float8 AS price,
+                        triggered_at
+                    FROM alert_history
+                    ORDER BY triggered_at DESC
+                    LIMIT %s
+                    """,
+                    (limit,),
+                )
+                return cursor.fetchall()
 
 
 def _row_to_alert(row: dict) -> AlertRule:

@@ -15,6 +15,9 @@ export function useAlerts(snapshot, trackedTickers) {
   const alertRules = ref([]);
   const triggeredKeys = ref(new Set());
   const popupNotice = ref(null);
+  const alertHistory = ref([]);
+  const hasUnreadHistory = ref(false);
+  const lastReadTriggeredAt = ref(null);
 
   let popupTimer;
 
@@ -60,14 +63,37 @@ export function useAlerts(snapshot, trackedTickers) {
 
   async function loadAlerts() {
     try {
-      const response = await fetch(`${API_BASE}/api/alerts`);
-      if (!response.ok) {
-        throw new Error("Failed to load alerts.");
-      }
+      const [alertsRes, historyRes, readRes] = await Promise.all([
+        fetch(`${API_BASE}/api/alerts`),
+        fetch(`${API_BASE}/api/alerts/history`),
+        fetch(`${API_BASE}/api/preferences/alert-history-read`),
+      ]);
 
-      alertRules.value = await response.json();
+      if (alertsRes.ok) {
+        alertRules.value = await alertsRes.json();
+      }
+      if (historyRes.ok) {
+        alertHistory.value = await historyRes.json();
+      }
+      if (readRes.ok) {
+        const payload = await readRes.json();
+        lastReadTriggeredAt.value = payload?.last_read_triggered_at ?? null;
+      }
+      syncUnreadState();
     } catch {
       alertRules.value = [];
+    }
+  }
+
+  async function fetchHistory() {
+    try {
+      const response = await fetch(`${API_BASE}/api/alerts/history`);
+      if (response.ok) {
+        alertHistory.value = await response.json();
+        syncUnreadState();
+      }
+    } catch (error) {
+      console.error("Failed to fetch alert history:", error);
     }
   }
 
@@ -117,6 +143,30 @@ export function useAlerts(snapshot, trackedTickers) {
     }
   }
 
+  async function markHistoryRead() {
+    const latestTriggeredAt = alertHistory.value[0]?.triggered_at;
+    if (!latestTriggeredAt) {
+      hasUnreadHistory.value = false;
+      return;
+    }
+
+    lastReadTriggeredAt.value = latestTriggeredAt;
+    hasUnreadHistory.value = false;
+    try {
+      await fetch(`${API_BASE}/api/preferences/alert-history-read`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          last_read_triggered_at: latestTriggeredAt,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to persist alert history read marker:", error);
+    }
+    }
+
   function evaluateAlerts(markets) {
     for (const rule of alertRules.value) {
       const current = markets[rule.market]?.price;
@@ -145,6 +195,27 @@ export function useAlerts(snapshot, trackedTickers) {
       rule.market;
     const title = `${marketTitle} alert`;
     const body = `Price moved ${rule.direction} ${rule.value.toFixed(2)} and is now ${price.toFixed(2)}.`;
+
+    // Record history
+    fetch(`${API_BASE}/api/alerts/history`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        alert_rule_id: rule.id,
+        market: rule.market,
+        direction: rule.direction,
+        threshold: rule.value,
+        price: price,
+      }),
+    })
+      .then((res) => {
+        if (res.ok) {
+          fetchHistory();
+        }
+      })
+      .catch((err) => console.error("Failed to record alert history:", err));
 
     if (notificationPermission.value === "granted") {
       new Notification(title, {
@@ -181,11 +252,29 @@ export function useAlerts(snapshot, trackedTickers) {
 
   return {
     activeAlerts,
+    alertHistory,
+    hasUnreadHistory,
     notificationPermission,
     popupNotice,
     addAlert,
     dismissPopup,
+    fetchHistory,
+    markHistoryRead,
     removeAlert,
     requestNotificationPermission,
   };
+
+  function syncUnreadState() {
+    const latestTriggeredAt = alertHistory.value[0]?.triggered_at;
+    if (!latestTriggeredAt) {
+      hasUnreadHistory.value = false;
+      return;
+    }
+    if (!lastReadTriggeredAt.value) {
+      hasUnreadHistory.value = true;
+      return;
+    }
+    hasUnreadHistory.value =
+      new Date(latestTriggeredAt).getTime() > new Date(lastReadTriggeredAt.value).getTime();
+  }
 }

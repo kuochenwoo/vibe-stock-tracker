@@ -12,4 +12,3 @@
 - [Not Yet Implemented] Add event and regime signals such as economic calendar events, market session countdowns, and trend/range state tags.
 - [Not Yet Implemented] Add a market-state engine that tags instruments as trend, range, breakout, reversal, or stale.
 - [Not Yet Implemented] Persist more UI preferences in the backend, including chart timeframe, layout presets, and session display mode.
-- [Not Yet Implemented] Add replay and alert-history views for reviewing triggered conditions over time.

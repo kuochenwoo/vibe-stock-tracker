@@ -170,3 +170,19 @@ SELECT id, 'GC=F', 'provider_symbol', 'seed'
 FROM tracked_tickers
 WHERE code = 'GC'
 ON CONFLICT (ticker_id, alias, alias_type) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS alert_history (
+    id UUID PRIMARY KEY,
+    alert_rule_id UUID REFERENCES alert_rules(id) ON DELETE SET NULL,
+    ticker_code CITEXT NOT NULL REFERENCES tracked_tickers(code) ON DELETE CASCADE,
+    direction VARCHAR(16) NOT NULL,
+    threshold NUMERIC(18, 6) NOT NULL,
+    price NUMERIC(18, 6) NOT NULL,
+    triggered_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_alert_history_ticker_code_triggered
+    ON alert_history (ticker_code, triggered_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_alert_history_triggered_at
+    ON alert_history (triggered_at DESC);

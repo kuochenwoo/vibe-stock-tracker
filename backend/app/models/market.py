@@ -57,6 +57,15 @@ class UpdatePanelOrderPreferenceRequest(BaseModel):
     codes: list[str] = Field(default_factory=list)
 
 
+class AlertHistoryReadPreference(BaseModel):
+    last_read_triggered_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class UpdateAlertHistoryReadRequest(BaseModel):
+    last_read_triggered_at: datetime
+
+
 class AlertRule(BaseModel):
     id: str
     market: str
@@ -72,6 +81,24 @@ class CreateAlertRuleRequest(BaseModel):
     direction: str
     value: float
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class AlertHistoryItem(BaseModel):
+    id: str
+    alert_rule_id: str | None = None
+    market: str
+    direction: str
+    threshold: float
+    price: float
+    triggered_at: datetime
+
+
+class CreateAlertHistoryRequest(BaseModel):
+    alert_rule_id: str | None = None
+    market: str
+    direction: str
+    threshold: float
+    price: float
 
 
 class MarketHistoryPoint(BaseModel):

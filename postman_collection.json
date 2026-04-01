@@ -165,6 +165,96 @@
               ]
             }
           }
+        },
+        {
+          "name": "Get Panel Order Preference",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preferences/panel-order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preferences",
+                "panel-order"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Panel Order Preference",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codes\": [\"CL\", \"GC\", \"BTC-USD\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/preferences/panel-order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preferences",
+                "panel-order"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Alert History Read Preference",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preferences/alert-history-read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preferences",
+                "alert-history-read"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Alert History Read Preference",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"last_read_triggered_at\": \"2026-04-01T09:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/preferences/alert-history-read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preferences",
+                "alert-history-read"
+              ]
+            }
+          }
         }
       ]
     },
@@ -397,6 +487,57 @@
                 "api",
                 "alerts",
                 "{{alertId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Alert History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/alerts/history?limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alerts",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record Alert History",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alert_rule_id\": \"{{alertId}}\",\n  \"market\": \"CL\",\n  \"direction\": \"above\",\n  \"threshold\": 80.5,\n  \"price\": 80.75\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/alerts/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "alerts",
+                "history"
               ]
             }
           }

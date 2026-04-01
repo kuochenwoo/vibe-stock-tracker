@@ -1,6 +1,7 @@
 <script setup>
 import { computed, reactive, watch } from "vue";
 import AlertRuleList from "./AlertRuleList.vue";
+import AlertHistoryList from "./AlertHistoryList.vue";
 
 const props = defineProps({
   ticker: {
@@ -8,6 +9,10 @@ const props = defineProps({
     required: true,
   },
   alerts: {
+    type: Array,
+    required: true,
+  },
+  history: {
     type: Array,
     required: true,
   },
@@ -21,6 +26,9 @@ const form = reactive({
 });
 
 const activeAlarmCount = computed(() => props.alerts.length);
+const tickerHistory = computed(() =>
+  props.history.filter((item) => item.market === props.ticker.code)
+);
 
 function formatPrice(value) {
   if (typeof value !== "number") return "--";
@@ -97,5 +105,13 @@ function submit() {
     </form>
 
     <AlertRuleList :alerts="alerts" @remove="emit('remove-alert', $event)" />
+
+    <section v-if="tickerHistory.length" class="ticker-manager" style="margin-top: 24px; border-top: 1px solid rgba(88, 98, 116, 0.08); padding-top: 24px;">
+      <p class="ticker-manager-title">TRIGGER HISTORY</p>
+      <AlertHistoryList
+          :history="tickerHistory"
+          :tracked-tickers="[ticker]"
+      />
+    </section>
   </aside>
 </template>

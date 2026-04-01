@@ -1,4 +1,4 @@
-from app.models.market import PanelOrderPreference
+from app.models.market import AlertHistoryReadPreference, PanelOrderPreference
 from app.repositories.preferences_repository import PreferencesRepository
 from app.repositories.ticker_repository import TickerRepository
 
@@ -19,6 +19,12 @@ class PreferencesService:
     def save_panel_order(self, codes: list[str]) -> PanelOrderPreference:
         sanitized = self._sanitize_codes_only(codes)
         return self.repository.save_panel_order(sanitized)
+
+    def get_alert_history_read(self) -> AlertHistoryReadPreference:
+        return self.repository.get_alert_history_read()
+
+    def save_alert_history_read(self, last_read_triggered_at) -> AlertHistoryReadPreference:
+        return self.repository.save_alert_history_read(last_read_triggered_at)
 
     def _sanitize_panel_order(self, codes: list[str], updated_at) -> PanelOrderPreference:
         return PanelOrderPreference(

@@ -220,6 +220,44 @@ h2 {
   min-width: 0;
 }
 
+.header-btn {
+  background: transparent;
+  border: 0;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.header-btn:hover {
+  background: rgba(88, 98, 116, 0.06);
+}
+
+.history-bell-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--muted);
+}
+
+.history-bell-btn.has-unread {
+  color: var(--accent);
+}
+
+.unread-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: var(--danger);
+  border-radius: 50%;
+  border: 2px solid var(--panel-strong);
+}
+
 .market-card,
 .fear-greed-card,
 .alerts-panel,

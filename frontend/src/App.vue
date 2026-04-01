@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import draggable from "vuedraggable";
+import AlertHistoryList from "./components/AlertHistoryList.vue";
 import AlertsManager from "./components/AlertsManager.vue";
 import ErrorPanel from "./components/ErrorPanel.vue";
 import FearGreedGauge from "./components/FearGreedGauge.vue";
@@ -45,13 +46,22 @@ const {
 } = useWireNews();
 const {
   activeAlerts,
+  alertHistory,
+  hasUnreadHistory,
   addAlert,
   dismissPopup,
+  markHistoryRead,
   popupNotice,
   removeAlert,
 } = useAlerts(snapshot, trackedTickers);
 const showTickerSettings = ref(false);
 const showAlarmSettings = ref(false);
+const showAlarmHistory = ref(false);
+
+function handleOpenHistory() {
+  showAlarmHistory.value = true;
+  markHistoryRead();
+}
 const alarmDrawerTicker = ref(null);
 const displayCards = ref([]);
 const localClock = ref(new Date());
@@ -375,6 +385,19 @@ onBeforeUnmount(() => {
           <span>Last Update</span>
           <strong>{{ formatTime(snapshot.updated_at) }}</strong>
         </div>
+        <button
+          class="header-item header-btn history-bell-btn"
+          :class="{ 'has-unread': hasUnreadHistory }"
+          type="button"
+          title="Alarm History"
+          @click="handleOpenHistory"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span v-if="hasUnreadHistory" class="unread-dot"></span>
+        </button>
       </div>
     </header>
 
@@ -463,6 +486,7 @@ onBeforeUnmount(() => {
           v-if="alarmDrawerTicker"
           :ticker="alarmDrawerTicker"
           :alerts="drawerAlerts"
+          :history="alertHistory"
           @close="handleCloseAlarmDrawer"
           @add-alert="addAlert"
           @remove-alert="removeAlert"
@@ -519,7 +543,27 @@ onBeforeUnmount(() => {
           <AlertsManager
             :alerts="activeAlerts"
             @remove="removeAlert"
+            @view-history="showAlarmSettings = false; handleOpenHistory()"
           />
+        </section>
+      </div>
+    </Teleport>
+
+    <Teleport to="body">
+      <div
+        v-if="showAlarmHistory"
+        class="settings-modal-backdrop"
+        @click.self="showAlarmHistory = false"
+      >
+        <section class="settings-modal" role="dialog" aria-modal="true">
+          <button class="icon-btn settings-modal-close" type="button" @click="showAlarmHistory = false">×</button>
+          <section class="ticker-manager">
+            <p class="ticker-manager-title">ALARM HISTORY</p>
+            <AlertHistoryList
+                :history="alertHistory"
+                :tracked-tickers="trackedTickers"
+            />
+          </section>
         </section>
       </div>
     </Teleport>

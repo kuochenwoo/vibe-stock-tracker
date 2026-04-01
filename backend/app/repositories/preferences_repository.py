@@ -1,9 +1,10 @@
 from psycopg.types.json import Jsonb
 
 from app.core.database import PostgresDatabase
-from app.models.market import PanelOrderPreference
+from app.models.market import AlertHistoryReadPreference, PanelOrderPreference
 
 PANEL_ORDER_PREFERENCE_KEY = "panel_order"
+ALERT_HISTORY_READ_PREFERENCE_KEY = "alert_history_read"
 
 
 class PreferencesRepository:
@@ -53,5 +54,55 @@ class PreferencesRepository:
         value = row["value"] or {}
         return PanelOrderPreference(
             codes=[str(code).upper() for code in value.get("codes", [])],
+            updated_at=row["updated_at"],
+        )
+
+    def get_alert_history_read(self) -> AlertHistoryReadPreference:
+        with self.database.connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT value, updated_at
+                    FROM app_preferences
+                    WHERE preference_key = %s
+                    """,
+                    (ALERT_HISTORY_READ_PREFERENCE_KEY,),
+                )
+                row = cursor.fetchone()
+
+        if not row:
+            return AlertHistoryReadPreference()
+
+        value = row["value"] or {}
+        last_read_triggered_at = value.get("last_read_triggered_at") if isinstance(value, dict) else None
+        return AlertHistoryReadPreference(
+            last_read_triggered_at=last_read_triggered_at,
+            updated_at=row["updated_at"],
+        )
+
+    def save_alert_history_read(self, last_read_triggered_at) -> AlertHistoryReadPreference:
+        with self.database.connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO app_preferences (preference_key, value, updated_at)
+                    VALUES (%s, %s, NOW())
+                    ON CONFLICT (preference_key)
+                    DO UPDATE SET
+                        value = EXCLUDED.value,
+                        updated_at = NOW()
+                    RETURNING value, updated_at
+                    """,
+                    (
+                        ALERT_HISTORY_READ_PREFERENCE_KEY,
+                        Jsonb({"last_read_triggered_at": last_read_triggered_at.isoformat()}),
+                    ),
+                )
+                row = cursor.fetchone()
+            connection.commit()
+
+        value = row["value"] or {}
+        return AlertHistoryReadPreference(
+            last_read_triggered_at=value.get("last_read_triggered_at"),
             updated_at=row["updated_at"],
         )

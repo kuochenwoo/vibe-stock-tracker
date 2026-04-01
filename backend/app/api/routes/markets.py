@@ -13,14 +13,18 @@ from app.api.dependencies import (
 )
 from app.models.market import (
     AlertRule,
-    CreateTrackedTickerRequest,
+    AlertHistoryItem,
     CreateAlertRuleRequest,
+    CreateAlertHistoryRequest,
+    CreateTrackedTickerRequest,
+    AlertHistoryReadPreference,
     MarketHistoryQuery,
     MovingAverageSnapshot,
     MarketHistoryResponse,
     MarketSnapshot,
     PanelOrderPreference,
     TrackedTicker,
+    UpdateAlertHistoryReadRequest,
     UpdatePanelOrderPreferenceRequest,
 )
 
@@ -106,6 +110,18 @@ async def update_panel_order_preference(
     return preferences_service.save_panel_order(request.codes)
 
 
+@router.get("/preferences/alert-history-read", response_model=AlertHistoryReadPreference)
+async def get_alert_history_read_preference() -> AlertHistoryReadPreference:
+    return preferences_service.get_alert_history_read()
+
+
+@router.put("/preferences/alert-history-read", response_model=AlertHistoryReadPreference)
+async def update_alert_history_read_preference(
+    request: UpdateAlertHistoryReadRequest,
+) -> AlertHistoryReadPreference:
+    return preferences_service.save_alert_history_read(request.last_read_triggered_at)
+
+
 @router.get("/alerts", response_model=list[AlertRule])
 async def list_alerts() -> list[AlertRule]:
     return alert_service.list_alerts()
@@ -125,3 +141,13 @@ async def delete_alert(alert_id: str) -> list[AlertRule]:
         return alert_service.delete_alert(alert_id)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.get("/alerts/history", response_model=list[AlertHistoryItem])
+async def list_alert_history(limit: int = 50) -> list[AlertHistoryItem]:
+    return alert_service.list_history(limit=limit)
+
+
+@router.post("/alerts/history", response_model=AlertHistoryItem, status_code=status.HTTP_201_CREATED)
+async def record_alert_history(request: CreateAlertHistoryRequest) -> AlertHistoryItem:
+    return alert_service.record_history(request)
