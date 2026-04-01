@@ -890,7 +890,8 @@ watch(
                   type="button"
                   @click="toggleMovingAverage(option.key)"
                 >
-                  {{ option.label }}
+                  <span>{{ option.label }}</span>
+                  <span v-if="option.active" class="ma-menu-check" aria-hidden="true">✓</span>
                 </button>
               </div>
             </div>
